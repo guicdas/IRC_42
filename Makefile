@@ -1,5 +1,5 @@
 CC				= c++
-CFLAGS			= -Wall -Wextra -Werror -std=c++98 -fsanitize=address
+CFLAGS			= -Wall -Wextra -Werror -std=c++98
 RM				= rm -fr
 
 SRCS_DIR		= srcs
@@ -9,21 +9,23 @@ INCLUDES_DIR	= includes
 NAME			= ircserv
 HEADER			= -I $(INCLUDES_DIR)
 
-SOURCES			= $(SRCS_DIR)/main.cpp
+SOURCES			= $(SRCS_DIR)/main.cpp $(SRCS_DIR)/chat.cpp
 
 SOURCES_O		= $(SOURCES:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
-all:			$(NAME)
+all:	$(NAME)
 
 $(NAME):		$(SOURCES_O)
 	$(CC) -o $@ $^
 
-$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
-	-mkdir -p $(OBJS_DIR)
+$(OBJS_DIR):
+	mkdir -p objs
+
+$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp | $(OBJS_DIR)
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	$(RM) $(OBJS_DIR)/*.o	
+	$(RM) $(OBJS_DIR)
 
 fclean:			clean
 	$(RM) $(NAME)
