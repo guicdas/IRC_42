@@ -13,13 +13,22 @@
 
 class Chat{
 	private:
+		unsigned int	port;
+		std::string		password;
+		int				socketFd;
+		sockaddr_in6	serverAddr;
 
 	public:
 		Chat( void );
+		Chat( char ** );
 		Chat( Chat const & );
 		Chat	&operator=( Chat const & );
-		~Chat();
+		~Chat( void );
 
+	void	createServerSocket( void );
+	void	prepareServerSocket( void );
+	int		getServerFd( void );
+	unsigned int	getServerPort( void );
 };
 
 class FileException : public std::exception{
