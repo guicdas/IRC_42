@@ -1,6 +1,9 @@
 #include "../includes/irc.hpp"
 
 int main( int ac, char **av ){
+	int				clientSocket;
+	sockaddr_in6	clientAddr;
+
 	try
 	{
 		if (ac != 3)
@@ -8,16 +11,10 @@ int main( int ac, char **av ){
 		
 		Chat chat(av);
 
-		int				clientSocket;
-		sockaddr_in6	clientAddr;
-		/* 
-		create an unbound socket in a communications domain, and return a file descriptor 
-		that can be used in later function calls that operate on sockets.*/
+		std::signal(SIGINT, Chat::signalHandler);
+		std::signal(SIGQUIT, Chat::signalHandler);
+		/* create an unbound socket in a communications domain, and return a file descriptor*/
 		chat.createServerSocket();
-
-		//if (fcntl(SerSocketFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
-		//	throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
-		chat.prepareServerSocket();
 		std::cout << "Server listening on port " << chat.getServerPort() << std::endl;
 
 		/* extract the first connection on the queue of pending connections, create a 
@@ -29,7 +26,7 @@ int main( int ac, char **av ){
 		if (clientSocket == -1)
 		{
 			close(chat.getServerFd());
-			std::cerr << "Error: accepting client: ";
+			std::cerr << "Error: accepting client: " << errno;
 			throw (FileException(strerror(errno)));
 		}
 
@@ -37,15 +34,16 @@ int main( int ac, char **av ){
 		recv(clientSocket, buffer, sizeof(buffer), 0);
 		std::cout << "Message from client: " << buffer << std::endl;
 
-		/* Closes a file descriptor, fildes. close() call shuts down the socket associated with 
-		the socket descriptor socket, and frees resources allocated to the socket. If socket refers 
-		to an open TCP connection, the connection is closed. If a stream socket is closed when there is input data queued, 
-		the TCP connection is reset rather than being cleanly closed. */
+		/* close() call shuts down the socket associated with the socket descriptor socket, and frees resources allocated to the socket. 
+		If socket refers to an open TCP connection, the connection is closed. */
 		if (close(chat.getServerPort()) == -1)
 		{
 			std::cerr << "Error: closing sockets: ";
 			throw (FileException(strerror(errno)));
 		}
 	}
-	catch(const std::exception &e){std::cerr << e.what() << std::endl;}
+	catch(const std::exception &e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 }

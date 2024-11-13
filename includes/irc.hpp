@@ -8,15 +8,19 @@
 #include <netinet/in.h>	//sockaddr_in
 #include <unistd.h>		//close
 #include <cerrno>		//errno
+#include <csignal>  	//signal
+ #include <sys/fcntl.h>
 
 #define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
 
 class Chat{
 	private:
+		struct sockaddr_in6	serverAddr;
+		//pollfd			poll;
 		unsigned int	port;
 		std::string		password;
 		int				socketFd;
-		sockaddr_in6	serverAddr;
+		static bool		signal;
 
 	public:
 		Chat( void );
@@ -25,10 +29,10 @@ class Chat{
 		Chat	&operator=( Chat const & );
 		~Chat( void );
 
-	void	createServerSocket( void );
-	void	prepareServerSocket( void );
-	int		getServerFd( void );
 	unsigned int	getServerPort( void );
+	void			createServerSocket( void );
+	int				getServerFd( void );
+	static void		signalHandler( int );
 };
 
 class FileException : public std::exception{
@@ -43,6 +47,5 @@ class FileException : public std::exception{
 
 /*
 getsockname, getprotobyname, gethostbyname, getaddrinfo, freeaddrinfo, 
-connect, inet_addr, inet_ntoa, send,
-signal, sigaction, lseek, fstat, fcntl,
+connect, send, sigaction, lseek, fstat,
 poll (or equivalent)*/
