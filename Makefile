@@ -9,7 +9,7 @@ INCLUDES_DIR	= includes
 NAME			= ircserv
 HEADER			= -I $(INCLUDES_DIR)
 
-SOURCES			= $(SRCS_DIR)/main.cpp $(SRCS_DIR)/chat.cpp
+SOURCES			= $(SRCS_DIR)/main.cpp $(SRCS_DIR)/server.cpp
 
 SOURCES_O		= $(SOURCES:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
