@@ -1,18 +1,19 @@
-#include "../includes/irc.hpp"
+#include "../includes/fd.hpp"
+#include "../includes/irc.hpp" 
 
 int main( int ac, char **av ){
 	try
 	{
+		t_env	e;
+
 		if (ac != 3)
 			throw(FileException("Wrong number of arguments!"));
-		
-		Server Server(av);
-		//std::signal(SIGINT, Server::signalHandler);
-		//std::signal(SIGQUIT, Server::signalHandler);
-		Server.createServerSocket();
-		Server.loop();
-		//if (close(Server.getServerPort()) == -1)
-		//	throw (FileException("Error: closing sockets: "));
+		if (initFds(&e) == 0)
+			throw (FileException("Error: initializing fds"));
+
+		Server	Server(av);
+		Server.createServerSocket(&e);
+		Server.loop(&e);
 	}
 	catch(const std::exception &e)
 	{

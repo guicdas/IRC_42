@@ -1,28 +1,11 @@
 #include "../includes/irc.hpp"
+#include "../includes/fd.hpp"
 
 Server::Server( void ){}
 
 Server::Server( char **av ){
-	int	i = 0;
-
 	this->password = av[2];
 	this->port = std::atoi(av[1]);
-
-	struct rlimit	rlp;
-	if (getrlimit(RLIMIT_NOFILE, &rlp) == -1)
-		throw (FileException("Error: getting rlimit!"));
-	this->maxfd = rlp.rlim_cur;
-	this->fds = (t_fd*) malloc(sizeof(*this->fds) * this->maxfd);
-	if (this->fds == NULL)
-		throw (FileException("Error: could not allocate fds!"));
-
-	while (i < this->maxfd)
-	{
-		this->fds[i].type = 0;
-		this->fds[i].fct_read = NULL;
-		this->fds[i].fct_write = NULL;
-		i++;
-	}
 }
 
 Server::Server( Server const &c ){
@@ -37,17 +20,7 @@ Server	&Server::operator=( Server const &c ){
 
 Server::~Server( void ){}
 
-void	Server::clientRead( void )
-{
-
-}
-
-void	Server::clientWrite( void )
-{
-
-}
-
-void	Server::acceptClient( void ){
+void	Server::acceptClient( t_env *e ){
 	int	i = 0;
 	/* extract the first connection on the queue of pending connections, create a 
 	new socket with the same socket type protocol and address family as the specified 
@@ -56,19 +29,17 @@ void	Server::acceptClient( void ){
 	std::cout << "New client #" << this->clientSocket << " from " 
 	<< inet_ntoa(this->clientAddr.sin_addr) << ":" << ntohs(this->clientAddr.sin_port) << "\n";
 
-	while (i < this->maxfd)
+	while (i < e->maxFd)
 	{
-		this->fds[i].type = 0;
-		this->fds[i].fct_read = NULL;
-		this->fds[i].fct_write = NULL;
+		clean_fd(&e->fds[i]);
 		i++;
 	}
-	this->fds[this->clientSocket].type = 2;
-	this->fds[this->clientSocket].fct_read = clientRead;
-	this->fds[this->clientSocket].fct_write = clientWrite;
+	e->fds[this->clientSocket].type = 2;
+	e->fds[this->clientSocket].clientRead = &Server::clientRead;
+	e->fds[this->clientSocket].clientWrite = &Server::clientWrite;
 }
 
-void	Server::createServerSocket( void ){
+void	Server::createServerSocket( t_env *e ){
 	struct protoent	*pe;
 	int reuse = 1;
 	int nRequests = 10;
@@ -85,63 +56,63 @@ void	Server::createServerSocket( void ){
 	this->serverAddr.sin_family = AF_INET;
 	this->serverAddr.sin_port = htons(this->port);
 	this->serverAddr.sin_addr.s_addr = INADDR_ANY;
-	/* The bind() function binds a unique local name to the socket with descriptor socket. */
+	// The bind() function binds a unique local name to the socket with descriptor socket.
 	if (bind(this->serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
 		throw (FileException("Error: bind(): "));
-	/* transforms an active socket into a passive socket
-	Once called, socket can never be used as an active socket to initiate connection requests 
-	It indicates a readiness to accept client connection requests, and creates a connection 
-	request queue of length backlog to queue incoming connection requests. 
-	Once full, additional connection requests are rejected.*/
+	
+	// transforms an active socket into a passive socket
+	// Once called, socket can never be used as an active socket to initiate connection requests 
+	// It indicates a readiness to accept client connection requests, and creates a connection 
+	// request queue of length backlog to queue incoming connection requests. 
+	// Once full, additional connection requests are rejected.
 	if (listen(this->serverSocket, nRequests) == -1)
 		throw (FileException("Error: listen(): "));
-	this->fds[this->serverSocket].type = 1;
-	this->fds[this->serverSocket].fct_read = acceptClient;
+	//if (!&fds[this->clientSocket])
+	//	throw ();
+	e->fds[this->serverSocket].type = 1;
+	e->fds[this->serverSocket].clientRead = &Server::acceptClient;
 }
 
-
-void	Server::loop( void ){
+void	Server::loop( t_env *e ){
 	int	i = 0;
 	int	maxFds = 0;
 	int	nFds;
 
-	FD_ZERO(&this->fd_read);
-	FD_ZERO(&this->fd_write);
-	while (i < this->maxfd)
+	FD_ZERO(&this->fdRead);
+	FD_ZERO(&this->fdWrite);
+	//FD_ZERO(&this->fdExcep);
+	while (i < e->maxFd)
 	{
-		if (this->fds[i].type != 0)
+		if (e->fds[i].type != 0)
 		{
-			FD_SET(i, &this->fd_read);
-			if (strlen(this->fds[i].buf_write) > 0)
-				FD_SET(i, &this->fd_write);
+			FD_SET(i, &this->fdRead);
+			if (strlen(e->fds[i].writeBuf) > 0)
+				FD_SET(i, &this->fdWrite);
 			maxFds = (maxFds > i) ? maxFds : i;
 		}
 		i++;
 	}
-	nFds = select(maxFds + 1, &this->fd_read, &this->fd_write, NULL, NULL);
+	nFds = select(maxFds + 1, &this->fdRead, &this->fdWrite, NULL, NULL);	//timeval
 	i = 0;
-	while ((i < this->maxfd) && (nFds > 0))
+	while ((i < e->maxFd) && (nFds > 0))
 	{
-		if (FD_ISSET(i, &this->fd_read))
-			this->fds[i].fct_read();
-		if (FD_ISSET(i, &this->fd_write))
-			this->fds[i].fct_write();
-		if (FD_ISSET(i, &this->fd_read) || FD_ISSET(i, &this->fd_write))
+		if (FD_ISSET(i, &this->fdRead))
+			(this->*e->fds[i].clientRead)(e);
+		if (FD_ISSET(i, &this->fdWrite))
+			(this->*e->fds[i].clientWrite)(e);
+		if (FD_ISSET(i, &this->fdRead) || FD_ISSET(i, &this->fdWrite))
 			nFds--;
 		i++;
 	}
 }
 
-bool Server::signal = false;
-/*void Server::signalHandler( int signum )
-{
-	std::cout << std::endl << "Signal Received: " << signum << std::endl;
-	Server::signal = true; //-> set the static boolean to true to stop the server
-}*/
-
 FileException::FileException( const char* msg ){
 	this->msg = msg;
-	this->msg += strerror(errno);
+	if (std::strcmp(strerror(errno), "SUCCESS") != 0)
+	{
+		this->msg += " ";
+		this->msg += strerror(errno);
+	}
 }
 FileException::~FileException( void ) throw() {}
 const char * FileException::what( void ) const throw() {

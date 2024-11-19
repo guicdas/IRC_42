@@ -4,19 +4,24 @@
 #include <exception>
 #include <cstring>
 #include <stdlib.h>
-#include <sys/socket.h>		//socket
+//#include <sys/socket.h>		//socket
 #include <arpa/inet.h>		//inet_ntoa
 #include <netinet/in.h>		//sockaddr_in
 #include <unistd.h>			//close
 #include <cerrno>			//errno
-#include <csignal>  		//signal
+//#include <csignal>  		//signal
 #include <sys/fcntl.h>
 # include <sys/select.h>	//select
-#include <sys/resource.h>	//getrlimit
 #include <netdb.h>			//getproto
 
+#include "fd.hpp"
+
 #define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
-# define BUF_SIZE	4096
+#ifndef BUF_SIZE
+# define BUF_SIZE 4096
+#endif
+
+typedef struct s_env t_env;
 
 class Server{
 	private:
@@ -26,11 +31,9 @@ class Server{
 		int					clientSocket;
 		std::string			password;
 		unsigned int		port;
-		fd_set				fd_write;
-		fd_set				fd_read;
-		t_fd				*fds;
-		int					maxfd;
-		static bool			signal;
+		fd_set				fdWrite;
+		fd_set				fdRead;
+		fd_set				fdExcep;
 
 	public:
 		Server( void );
@@ -39,31 +42,24 @@ class Server{
 		Server	&operator=( Server const & );
 		~Server( void );
 
-	void	createServerSocket( void );
-	void	acceptClient( void );
-	void	clientWrite( void );
-	void	clientRead( void );
-	void	loop( void );
-
-	//static void		signalHandler( int );
+	void	createServerSocket( t_env * );
+	void	loop( t_env * );
+	void	acceptClient( t_env * );
+	void	clientWrite( t_env * );
+	void	clientRead( t_env * );
 };
+
+typedef struct s_env{
+	t_fd *fds;
+	int	maxFd;
+} t_env;
 
 class FileException : public std::exception{
 	private:
 		std::string msg;
-		std::string errno_s;
-	
+
 	public:
 		FileException( const char * );
 		~FileException( void ) throw();
 		virtual const char* what() const throw();
 };
-
-typedef struct	s_fd
-{
-	int	type;
-	void	(Server::*fct_read)();
-	void	(Server::*fct_write)();
-	char	buf_read[BUF_SIZE + 1];
-	char	buf_write[BUF_SIZE + 1];
-}		t_fd;
