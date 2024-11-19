@@ -7,12 +7,9 @@ int main( int ac, char **av ){
 			throw(FileException("Wrong number of arguments!"));
 		
 		Server Server(av);
-
-		std::signal(SIGINT, Server::signalHandler);
-		std::signal(SIGQUIT, Server::signalHandler);
+		//std::signal(SIGINT, Server::signalHandler);
+		//std::signal(SIGQUIT, Server::signalHandler);
 		Server.createServerSocket();
-		std::cout << "Server listening on port " << Server.getServerPort() << std::endl;
-		Server.acceptClient();
 		Server.loop();
 		//if (close(Server.getServerPort()) == -1)
 		//	throw (FileException("Error: closing sockets: "));

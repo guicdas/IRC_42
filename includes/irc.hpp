@@ -18,7 +18,6 @@
 #define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
 # define BUF_SIZE	4096
 
-
 class Server{
 	private:
 		struct sockaddr_in	serverAddr;
@@ -40,10 +39,13 @@ class Server{
 		Server	&operator=( Server const & );
 		~Server( void );
 
-	void			createServerSocket( void );
-	void			loop( void );
+	void	createServerSocket( void );
+	void	acceptClient( void );
+	void	clientWrite( void );
+	void	clientRead( void );
+	void	loop( void );
 
-	static void		signalHandler( int );
+	//static void		signalHandler( int );
 };
 
 class FileException : public std::exception{
@@ -57,15 +59,11 @@ class FileException : public std::exception{
 		virtual const char* what() const throw();
 };
 
-
 typedef struct	s_fd
 {
-  int	type;
-  void	(*fct_read)();
-  void	(*fct_write)();
-  char	buf_read[BUF_SIZE + 1];
-  char	buf_write[BUF_SIZE + 1];
+	int	type;
+	void	(Server::*fct_read)();
+	void	(Server::*fct_write)();
+	char	buf_read[BUF_SIZE + 1];
+	char	buf_write[BUF_SIZE + 1];
 }		t_fd;
-/*
-getsockname, getprotobyname, gethostbyname, getaddrinfo, freeaddrinfo, 
-connect, send, lseek, fstat,*/

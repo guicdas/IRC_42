@@ -37,17 +37,17 @@ Server	&Server::operator=( Server const &c ){
 
 Server::~Server( void ){}
 
-static void	client_read( void )//t_env *e, int cs)
+void	Server::clientRead( void )
 {
 
 }
 
-static void	client_write( void )//t_env *e, int cs)
+void	Server::clientWrite( void )
 {
 
 }
 
-static void	acceptClient( void ){
+void	Server::acceptClient( void ){
 	int	i = 0;
 	/* extract the first connection on the queue of pending connections, create a 
 	new socket with the same socket type protocol and address family as the specified 
@@ -64,8 +64,8 @@ static void	acceptClient( void ){
 		i++;
 	}
 	this->fds[this->clientSocket].type = 2;
-	this->fds[this->clientSocket].fct_read = client_read;
-	this->fds[this->clientSocket].fct_write = client_write;
+	this->fds[this->clientSocket].fct_read = clientRead;
+	this->fds[this->clientSocket].fct_write = clientWrite;
 }
 
 void	Server::createServerSocket( void ){
@@ -133,11 +133,11 @@ void	Server::loop( void ){
 }
 
 bool Server::signal = false;
-void Server::signalHandler( int signum )
+/*void Server::signalHandler( int signum )
 {
 	std::cout << std::endl << "Signal Received: " << signum << std::endl;
 	Server::signal = true; //-> set the static boolean to true to stop the server
-}
+}*/
 
 FileException::FileException( const char* msg ){
 	this->msg = msg;
