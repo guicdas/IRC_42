@@ -59,10 +59,9 @@ void	Server::createServerSocket( t_env *e ){
 	// The bind() function binds a unique local name to the socket with descriptor socket.
 	if (bind(this->serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
 		throw (FileException("Error: bind(): "));
-	
-	// transforms an active socket into a passive socket
+
 	// Once called, socket can never be used as an active socket to initiate connection requests 
-	// It indicates a readiness to accept client connection requests, and creates a connection 
+	// readiness to accept client connection requests, and creates a connection 
 	// request queue of length backlog to queue incoming connection requests. 
 	// Once full, additional connection requests are rejected.
 	if (listen(this->serverSocket, nRequests) == -1)
@@ -83,7 +82,7 @@ void	Server::loop( t_env *e ){
 	//FD_ZERO(&this->fdExcep);
 	while (i < e->maxFd)
 	{
-		if (e->fds[i].type != 0)
+		if (e->fds[i].type != FREE)
 		{
 			FD_SET(i, &this->fdRead);
 			if (strlen(e->fds[i].writeBuf) > 0)
@@ -96,19 +95,22 @@ void	Server::loop( t_env *e ){
 	i = 0;
 	while ((i < e->maxFd) && (nFds > 0))
 	{
+		if (!e->fds[i].clientRead)
+			throw (FileException("deu merda"));
 		if (FD_ISSET(i, &this->fdRead))
-			(this->*e->fds[i].clientRead)(e);
+			e->fds[i].clientRead(e);
+		/*
 		if (FD_ISSET(i, &this->fdWrite))
 			(this->*e->fds[i].clientWrite)(e);
 		if (FD_ISSET(i, &this->fdRead) || FD_ISSET(i, &this->fdWrite))
 			nFds--;
-		i++;
+		*/i++;
 	}
 }
 
 FileException::FileException( const char* msg ){
 	this->msg = msg;
-	if (std::strcmp(strerror(errno), "SUCCESS") != 0)
+	if (std::strcmp(strerror(errno), "Success") != 0)
 	{
 		this->msg += " ";
 		this->msg += strerror(errno);

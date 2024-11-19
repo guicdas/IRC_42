@@ -4,7 +4,9 @@ void	Server::clientRead( t_env *e )
 {
 	int	received, i = 0;
 
-	received = recv(this->clientSocket, e->fds[this->clientSocket].readBuf, BUF_SIZE, 0);
+	//received = recv(this->clientSocket, e->fds[this->clientSocket].readBuf, BUF_SIZE, 0);
+	std::cerr << "read" << std::endl;
+	/*
 	if (received < 1)
 	{
 		close(this->clientSocket);
@@ -24,6 +26,7 @@ void	Server::clientRead( t_env *e )
 			i++;
 		}
 	}
+	*/
 }
 
 void	Server::clientWrite( t_env *e )

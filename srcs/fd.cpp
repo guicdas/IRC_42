@@ -3,7 +3,7 @@
 
 void	clean_fd( t_fd *fd )
 {
-	fd->type = 0;
+	fd->type = FREE;
 	fd->clientRead = NULL;
 	fd->clientWrite = NULL;
 }

@@ -23,14 +23,20 @@
 
 typedef struct s_env t_env;
 
+typedef enum {
+	FREE = 0,
+	SERVER = 1,
+	CLIENT = 2
+} fdType;
+
 class Server{
 	private:
 		struct sockaddr_in	serverAddr;
 		struct sockaddr_in	clientAddr;
-		int					serverSocket;
-		int					clientSocket;
 		std::string			password;
 		unsigned int		port;
+		int					serverSocket;
+		int					clientSocket;
 		fd_set				fdWrite;
 		fd_set				fdRead;
 		fd_set				fdExcep;
