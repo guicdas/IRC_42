@@ -1,22 +1,16 @@
 #include "../includes/irc.hpp"
 
-void	Server::clientRead( t_env *e )
+void	Server::clientRead( t_client client )
 {
 	int	received, i = 0;
 
-	//received = recv(this->clientSocket, e->fds[this->clientSocket].readBuf, BUF_SIZE, 0);
-	std::cerr << "read" << std::endl;
-	/*
+	received = recv(client.fd, &client.buffer, 4096, 0);
 	if (received < 1)
 	{
-		close(this->clientSocket);
-		while (i < e->maxFd)
-		{
-			clean_fd(&e->fds[i]);
-			i++;
-		}
+		close(client.fd);
 		throw (FileException("client gone"));
 	}
+	/*
 	else
 	{
 		while (i < e->maxFd)
@@ -29,7 +23,7 @@ void	Server::clientRead( t_env *e )
 	*/
 }
 
-void	Server::clientWrite( t_env *e )
+void	Server::clientWrite( t_client client )
 {
-	(void)e;
+	(void)client;
 }

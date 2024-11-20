@@ -1,5 +1,5 @@
 CXX				= c++
-CXXFLAGS		= -Wall -Wextra -Iincludes/ -std=c++98#-Werror
+CXXFLAGS		= -Iincludes/ -std=c++98 #-Wall -Wextra  #-Werror
 RM				= rm -fr
 
 SRCS_DIR		= srcs

@@ -1,5 +1,4 @@
 #include "../includes/irc.hpp"
-#include "../includes/fd.hpp"
 
 Server::Server( void ){}
 
@@ -20,26 +19,23 @@ Server	&Server::operator=( Server const &c ){
 
 Server::~Server( void ){}
 
-void	Server::acceptClient( t_env *e ){
-	int	i = 0;
-	/* extract the first connection on the queue of pending connections, create a 
-	new socket with the same socket type protocol and address family as the specified 
-	socket, and allocate a new file descriptor for that socket */
-	this->clientSocket = accept(this->serverSocket, (struct sockaddr*)&this->clientAddr, (socklen_t *)sizeof(clientAddr));
-	std::cout << "New client #" << this->clientSocket << " from " 
-	<< inet_ntoa(this->clientAddr.sin_addr) << ":" << ntohs(this->clientAddr.sin_port) << "\n";
+void	Server::acceptClient( void ){
+	struct sockaddr_in	clientAddr;
+	socklen_t			csin_len;
+	int					clientSocket;
 
-	while (i < e->maxFd)
-	{
-		clean_fd(&e->fds[i]);
-		i++;
-	}
-	e->fds[this->clientSocket].type = 2;
-	e->fds[this->clientSocket].clientRead = &Server::clientRead;
-	e->fds[this->clientSocket].clientWrite = &Server::clientWrite;
+	bzero(&clientAddr, sizeof(struct sockaddr_in));
+
+  	csin_len = sizeof(clientAddr);
+	clientSocket = accept(this->serverSocket, (struct sockaddr*)&clientAddr, &csin_len);
+	std::cout << "New client #" << clientSocket << " from ";
+	std::cout << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
+	FD_SET(clientSocket, &this->fdList);
+	this->maxFds = clientSocket > this->maxFds ? clientSocket :  this->maxFds;
+	this->clients.push_back((t_client){.fd=clientSocket, .buffer=""});
 }
 
-void	Server::createServerSocket( t_env *e ){
+void	Server::createServerSocket( void ){
 	struct protoent	*pe;
 	int reuse = 1;
 	int nRequests = 10;
@@ -56,55 +52,38 @@ void	Server::createServerSocket( t_env *e ){
 	this->serverAddr.sin_family = AF_INET;
 	this->serverAddr.sin_port = htons(this->port);
 	this->serverAddr.sin_addr.s_addr = INADDR_ANY;
-	// The bind() function binds a unique local name to the socket with descriptor socket.
 	if (bind(this->serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
 		throw (FileException("Error: bind(): "));
-
-	// Once called, socket can never be used as an active socket to initiate connection requests 
-	// readiness to accept client connection requests, and creates a connection 
-	// request queue of length backlog to queue incoming connection requests. 
-	// Once full, additional connection requests are rejected.
 	if (listen(this->serverSocket, nRequests) == -1)
 		throw (FileException("Error: listen(): "));
-	//if (!&fds[this->clientSocket])
-	//	throw ();
-	e->fds[this->serverSocket].type = 1;
-	e->fds[this->serverSocket].clientRead = &Server::acceptClient;
 }
 
-void	Server::loop( t_env *e ){
+void	Server::loop( void ){
 	int	i = 0;
-	int	maxFds = 0;
+	this->maxFds = this->serverSocket;
 	int	nFds;
 
-	FD_ZERO(&this->fdRead);
+	FD_ZERO(&this->fdList);
 	FD_ZERO(&this->fdWrite);
-	//FD_ZERO(&this->fdExcep);
-	while (i < e->maxFd)
-	{
-		if (e->fds[i].type != FREE)
+	FD_SET(this->serverSocket, &this->fdList);
+	while (1)
+	{	
+		this->fdWrite = this->fdRead = this->fdList;
+		nFds = select(this->maxFds + 1, &this->fdRead, &this->fdWrite, NULL, NULL);
+		if (FD_ISSET(this->serverSocket, &this->fdRead))
+			this->acceptClient();
+		else 
 		{
-			FD_SET(i, &this->fdRead);
-			if (strlen(e->fds[i].writeBuf) > 0)
-				FD_SET(i, &this->fdWrite);
-			maxFds = (maxFds > i) ? maxFds : i;
+			for (std::vector<t_client>::iterator begin = this->clients.begin(); begin != this->clients.end(); ++begin)
+			{
+				t_client client = *begin;
+				if (FD_ISSET(client.fd, &this->fdRead))
+				{	
+					std::cout << "client: " << client.fd << "\n";
+					std::cout << "read\n";
+				}
+			}
 		}
-		i++;
-	}
-	nFds = select(maxFds + 1, &this->fdRead, &this->fdWrite, NULL, NULL);	//timeval
-	i = 0;
-	while ((i < e->maxFd) && (nFds > 0))
-	{
-		if (!e->fds[i].clientRead)
-			throw (FileException("deu merda"));
-		if (FD_ISSET(i, &this->fdRead))
-			e->fds[i].clientRead(e);
-		/*
-		if (FD_ISSET(i, &this->fdWrite))
-			(this->*e->fds[i].clientWrite)(e);
-		if (FD_ISSET(i, &this->fdRead) || FD_ISSET(i, &this->fdWrite))
-			nFds--;
-		*/i++;
 	}
 }
 
