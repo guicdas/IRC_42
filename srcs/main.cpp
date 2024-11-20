@@ -8,6 +8,7 @@ int main( int ac, char **av ){
 
 		Server	Server(av);
 		Server.createServerSocket();
+		Server.createCommandMap();
 		Server.loop();
 	}
 	catch(const std::exception &e){std::cerr << e.what() << std::endl;}

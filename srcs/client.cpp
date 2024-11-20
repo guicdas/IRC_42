@@ -1,26 +1,21 @@
 #include "../includes/irc.hpp"
 
+#define BUF_SIZE 4096
+
 void	Server::clientRead( t_client client )
 {
-	int	received, i = 0;
+	int	received;
+	char buffer[BUF_SIZE] = {0};
 
-	received = recv(client.fd, &client.buffer, 4096, 0);
+	received = recv(client.fd, &buffer, BUF_SIZE, 0);
 	if (received < 1)
 	{
-		close(client.fd);
+		FD_CLR(client.fd, &this->fdRead);
 		throw (FileException("client gone"));
 	}
-	/*
-	else
-	{
-		while (i < e->maxFd)
-		{
-			if ((e->fds[i].type == 2) && (i != this->clientSocket))
-				send(i, e->fds[this->clientSocket].readBuf, received, 0);
-			i++;
-		}
-	}
-	*/
+	client.buffer = buffer;
+	std::cout << client.buffer << "\n";
+	
 }
 
 void	Server::clientWrite( t_client client )

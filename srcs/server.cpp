@@ -35,6 +35,10 @@ void	Server::acceptClient( void ){
 	this->clients.push_back((t_client){.fd=clientSocket, .buffer=""});
 }
 
+void	Server::createCommandMap( void ){
+	
+}
+
 void	Server::createServerSocket( void ){
 	struct protoent	*pe;
 	int reuse = 1;
@@ -79,8 +83,7 @@ void	Server::loop( void ){
 				t_client client = *begin;
 				if (FD_ISSET(client.fd, &this->fdRead))
 				{	
-					std::cout << "client: " << client.fd << "\n";
-					std::cout << "read\n";
+					clientRead(client);
 				}
 			}
 		}

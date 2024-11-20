@@ -1,13 +1,12 @@
 CXX				= c++
-CXXFLAGS		= -Iincludes/ -std=c++98 #-Wall -Wextra  #-Werror
+CXXFLAGS		= -Iincludes/ -std=c++98 #-Wall -Wextra -Werror
 RM				= rm -fr
 
 SRCS_DIR		= srcs
 OBJS_DIR		= objs
 
 NAME			= ircserv
-SOURCES			= $(SRCS_DIR)/main.cpp $(SRCS_DIR)/server.cpp $(SRCS_DIR)/client.cpp \
-				$(SRCS_DIR)/fd.cpp
+SOURCES			= $(SRCS_DIR)/main.cpp $(SRCS_DIR)/server.cpp $(SRCS_DIR)/client.cpp 
 SOURCES_O		= $(SOURCES:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
 all:	$(NAME)
