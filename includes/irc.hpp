@@ -12,6 +12,7 @@
 # include <sys/select.h>	//select
 #include <netdb.h>			//getproto
 #include <vector>
+#include <map>
 
 //#define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
 
@@ -24,6 +25,7 @@ typedef struct s_client
 
 class Server{
 	private:
+		std::map<std::string, void(*)()>	commands;
 		struct sockaddr_in		serverAddr;
 		std::vector<t_client>	clients;
 		std::string				password;
@@ -43,11 +45,14 @@ class Server{
 		~Server( void );
 
 	void	createServerSocket( void );
+	void	createCommandMap( void );
 	void	loop( void );
 	void	acceptClient( void );
 	void	clientWrite( t_client );
 	void	clientRead( t_client );
 };
+
+void	join( void );
 
 class FileException : public std::exception{
 	private:

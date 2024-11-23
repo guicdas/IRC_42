@@ -36,7 +36,7 @@ void	Server::acceptClient( void ){
 }
 
 void	Server::createCommandMap( void ){
-	
+	this->commands["join"] = &join;
 }
 
 void	Server::createServerSocket( void ){

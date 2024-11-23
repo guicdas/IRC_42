@@ -6,7 +6,7 @@ SRCS_DIR		= srcs
 OBJS_DIR		= objs
 
 NAME			= ircserv
-SOURCES			= $(SRCS_DIR)/main.cpp $(SRCS_DIR)/server.cpp $(SRCS_DIR)/client.cpp 
+SOURCES			= $(wildcard srcs/*.cpp)
 SOURCES_O		= $(SOURCES:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
 all:	$(NAME)
