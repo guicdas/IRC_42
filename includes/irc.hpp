@@ -3,6 +3,7 @@
 #include <iostream>
 #include <exception>
 #include <cstring>
+#include <string>
 #include <stdlib.h>
 #include <arpa/inet.h>		//inet_ntoa
 #include <netinet/in.h>		//sockaddr_in
@@ -16,16 +17,24 @@
 
 //#define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
 
-typedef struct s_client
-{
+typedef struct s_client{
 	int fd;
 	std::string buffer;
+	std::string	name;
 } t_client;
 
+typedef struct s_channel{
+	std::vector< t_client > moderators;
+	std::vector< t_client > users;
+} t_channel;
 
-class Server{
+class Server
+{
 	private:
-		std::map<std::string, void(*)()>	commands;
+		std::map<std::string, void(Server::*)( t_client, std::string )>	commands;
+		std::map<std::string, std::string>	channels;
+		/*The channel is created implicitly when the first client joins it, and the channel ceases to exist when the last client leaves it.
+		While the channel exists, any client can reference the channel using the name of the channel.*/
 		struct sockaddr_in		serverAddr;
 		std::vector<t_client>	clients;
 		std::string				password;
@@ -50,9 +59,11 @@ class Server{
 	void	acceptClient( void );
 	void	clientWrite( t_client );
 	void	clientRead( t_client );
-};
 
-void	join( void );
+	void	list( t_client, std::string );
+	void	join( t_client, std::string );
+	void	nick( t_client, std::string );
+};
 
 class FileException : public std::exception{
 	private:

@@ -36,7 +36,9 @@ void	Server::acceptClient( void ){
 }
 
 void	Server::createCommandMap( void ){
-	this->commands["join"] = &join;
+	this->commands["/join"] = &Server::join;
+	this->commands["/nick"] = &Server::nick;
+	this->commands["/list"] = &Server::list;
 }
 
 void	Server::createServerSocket( void ){
