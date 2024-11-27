@@ -22,29 +22,32 @@ typedef struct s_client{
 	std::string buffer;
 	std::string	name;
 } t_client;
+/*A user may be joined to several channels at once, but a limit may be imposed by the server as to how many channels a client can be in at one time*/
 
 typedef struct s_channel{
-	std::vector< t_client > moderators;
-	std::vector< t_client > users;
+	std::vector< t_client > operators;
+	std::vector< t_client > clients;
+	std::string				name;
+	//may not contain any spaces, a control G / BELL ('^G', 0x07), or a comma
+	std::string				topic;
+	/*he topic is a line shown to all users when they join the channel, and all users in the channel are notified when the topic of a channel is changed*/
 } t_channel;
 
 class Server
 {
 	private:
-		std::map<std::string, void(Server::*)( t_client, std::string )>	commands;
-		std::map<std::string, std::string>	channels;
-		/*The channel is created implicitly when the first client joins it, and the channel ceases to exist when the last client leaves it.
-		While the channel exists, any client can reference the channel using the name of the channel.*/
-		struct sockaddr_in		serverAddr;
-		std::vector<t_client>	clients;
-		std::string				password;
-		unsigned int			port;
-		int						serverSocket;
-		fd_set					fdList;
-		fd_set					fdWrite;
-		fd_set					fdRead;
-		fd_set					fdExcep;
-		int						maxFds;
+		std::map< std::string, void(Server::*)( t_client *, std::string ) >	commands;
+		std::vector< t_channel >	channels;
+		std::vector< t_client >		clients;
+		struct sockaddr_in			serverAddr;
+		std::string					password;
+		unsigned int				port;
+		int							serverSocket;
+		fd_set						fdList;
+		fd_set						fdWrite;
+		fd_set						fdRead;
+		fd_set						fdExcep;
+		int							maxFds;
 
 	public:
 		Server( void );
@@ -57,12 +60,13 @@ class Server
 	void	createCommandMap( void );
 	void	loop( void );
 	void	acceptClient( void );
-	void	clientWrite( t_client );
-	void	clientRead( t_client );
+	void	clientWrite( t_client * );
+	void	clientRead( t_client * );
 
-	void	list( t_client, std::string );
-	void	join( t_client, std::string );
-	void	nick( t_client, std::string );
+	void	list( t_client * , std::string );
+	void	join( t_client * , std::string );
+	void	nick( t_client * , std::string );
+	void	quit( t_client * , std::string );
 };
 
 class FileException : public std::exception{

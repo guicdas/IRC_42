@@ -39,6 +39,7 @@ void	Server::createCommandMap( void ){
 	this->commands["/join"] = &Server::join;
 	this->commands["/nick"] = &Server::nick;
 	this->commands["/list"] = &Server::list;
+	this->commands["/quit"] = &Server::quit;
 }
 
 void	Server::createServerSocket( void ){
@@ -73,19 +74,20 @@ void	Server::loop( void ){
 	FD_ZERO(&this->fdWrite);
 	FD_SET(this->serverSocket, &this->fdList);
 	while (1)
-	{	
+	{
 		this->fdWrite = this->fdRead = this->fdList;
 		nFds = select(this->maxFds + 1, &this->fdRead, &this->fdWrite, NULL, NULL);
 		if (FD_ISSET(this->serverSocket, &this->fdRead))
 			this->acceptClient();
 		else 
 		{
-			for (std::vector<t_client>::iterator begin = this->clients.begin(); begin != this->clients.end(); ++begin)
+			for (std::vector<t_client>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
 			{
-				t_client client = *begin;
+				t_client &client = *it;
 				if (FD_ISSET(client.fd, &this->fdRead))
-				{	
-					clientRead(client);
+				{
+					clientRead(&client);
+					clientWrite(&client);
 				}
 			}
 		}
