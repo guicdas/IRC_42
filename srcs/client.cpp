@@ -2,46 +2,37 @@
 
 #define BUF_SIZE 4096
 
-void	Server::clientRead( t_client *client )
+int	Server::clientRead( t_client *client )
 {
 	char		buffer[BUF_SIZE] = {0};
-	std::size_t	found;
-
-	//std::cout << "client infos:\n\t- name: " << client->name << \
-	"\n\t- buffer: " << client->buffer << "\n\t- fd: " << client->fd << std::endl;
-	// nome n fica guardado
 
 	if (recv(client->fd, &buffer, BUF_SIZE, 0) < 1)
-	{
-		FD_CLR(client->fd, &this->fdRead);
-		throw (FileException("client gone"));
-	}
-	client->buffer = buffer; //while 
-
-	found = client->buffer.find(' ', 0);
-	if (found == std::string::npos)
-		found = client->buffer.find(10, 0);
-	std::map<std::string, void(Server::*)( t_client *, std::string string )>::const_iterator it = this->commands.find(client->buffer.substr(0, found));
+		return (0);
+	client->args = ircSplit(buffer, ' ');
+	std:transform(client->args.at(0).begin(), client->args.at(0).end(), client->args.at(0).begin(), ::toupper);
+	std::cout << "line received: " << buffer << std::endl;
+	std::cout << "Command: " << client->args.at(0) << std::endl;
 	
-	if (it != this->commands.end())
-	{
-		std::cout << "encontrou\t"<<  it->first << std::endl;
-		(this->*it->second)(client, client->buffer);
-	}
-	//std::cout << client.buffer << std::endl;
+	client->buffer = "";
+
+	std::map<std::string, void(Server::*)( t_client *, std::vector< std::string >)>::iterator itMap = this->commands.find(client->args.at(0));
+	if (itMap != this->commands.end())
+		(this->*itMap->second)(client, client->args);
+
+	return (1);
 }
 
 void	Server::clientWrite( t_client *client )
 {
 	char		buffer[BUF_SIZE];
 
-	std::cout << "client infos:\n\t- name: " << client->name << \
-	"\n\t- buffer: " << client->buffer << "\n\t- fd: " << client->fd << std::endl;
-	// nada fica guardado
-
+	//client->buffer = "@time " + client->name;
 	std::strcpy(buffer, client->buffer.c_str());
-	if (send(client->fd, &buffer, std::strlen(buffer), 0) < 1)
-		throw (FileException("deu merda"));
+	if (std::strlen(buffer) > 0)
+	{
+		if (send(client->fd, &buffer, std::strlen(buffer), 0) < 1)
+			std::cout << "client " << client->name << " DEUMERDA";
+	}
 }
 
 /*

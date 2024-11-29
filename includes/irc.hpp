@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>			//getline
+#include <sstream>			//stringstream
 #include <exception>
 #include <cstring>
 #include <string>
@@ -14,6 +16,7 @@
 #include <netdb.h>			//getproto
 #include <vector>
 #include <map>
+#include <algorithm>		//transform
 
 //#define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
 
@@ -21,8 +24,10 @@ typedef struct s_client{
 	int fd;
 	std::string buffer;
 	std::string	name;
+	std::vector< std::string > args;
 } t_client;
-/*A user may be joined to several channels at once, but a limit may be imposed by the server as to how many channels a client can be in at one time*/
+/*A user may be joined to several channels at once, but a limit may be imposed by the server as to how many channels a client can be in at one time
+channel ceases to exist when the last client leaves it.*/
 
 typedef struct s_channel{
 	std::vector< t_client > operators;
@@ -36,7 +41,7 @@ typedef struct s_channel{
 class Server
 {
 	private:
-		std::map< std::string, void(Server::*)( t_client *, std::string ) >	commands;
+		std::map< std::string, void(Server::*)( t_client *, std::vector<std::string> )>	commands;
 		std::vector< t_channel >	channels;
 		std::vector< t_client >		clients;
 		struct sockaddr_in			serverAddr;
@@ -61,13 +66,15 @@ class Server
 	void	loop( void );
 	void	acceptClient( void );
 	void	clientWrite( t_client * );
-	void	clientRead( t_client * );
+	int		clientRead( t_client * );
 
-	void	list( t_client * , std::string );
-	void	join( t_client * , std::string );
-	void	nick( t_client * , std::string );
-	void	quit( t_client * , std::string );
+	void	list( t_client * , std::vector<std::string> );
+	void	join( t_client * , std::vector<std::string> );
+	void	nick( t_client * , std::vector<std::string> );
+	void	quit( t_client * , std::vector<std::string> );
 };
+
+std::vector<std::string>	ircSplit(std::string str, char c);
 
 class FileException : public std::exception{
 	private:
