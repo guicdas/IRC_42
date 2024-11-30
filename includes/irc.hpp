@@ -1,24 +1,25 @@
 #pragma once
 
 #include <iostream>
-#include <iomanip>			//getline
-#include <sstream>			//stringstream
+#include <iomanip>			// getline
+#include <sstream>			// stringstream
 #include <exception>
 #include <cstring>
 #include <string>
 #include <stdlib.h>
-#include <arpa/inet.h>		//inet_ntoa
-#include <netinet/in.h>		//sockaddr_in
-#include <unistd.h>			//close
-#include <cerrno>			//errno
+#include <arpa/inet.h>		// inet_ntoa
+#include <netinet/in.h>		// sockaddr_in
+#include <unistd.h>			// close
+#include <cerrno>			// errno
 #include <sys/fcntl.h>
-# include <sys/select.h>	//select
-#include <netdb.h>			//getproto
+#include <sys/select.h>		// select
+#include <netdb.h>			// getproto
 #include <vector>
 #include <map>
-#include <algorithm>		//transform
+#include <iterator>			// advance, distance
 
 //#define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
+#define ENDL "." << std::endl
 
 typedef struct s_client{
 	int fd;
@@ -65,13 +66,16 @@ class Server
 	void	createCommandMap( void );
 	void	loop( void );
 	void	acceptClient( void );
-	void	clientWrite( t_client * );
-	int		clientRead( t_client * );
 
-	void	list( t_client * , std::vector<std::string> );
-	void	join( t_client * , std::vector<std::string> );
-	void	nick( t_client * , std::vector<std::string> );
-	void	quit( t_client * , std::vector<std::string> );
+	int		clientRead( t_client * );
+	void	parseCommand( t_client *client, std::string s );
+
+	void	clientWrite( t_client * );
+
+	void	list( t_client * , std::vector< std::string > );
+	void	join( t_client * , std::vector< std::string > );
+	void	nick( t_client * , std::vector< std::string > );
+	void	quit( t_client * , std::vector< std::string > );
 };
 
 std::vector<std::string>	ircSplit(std::string str, char c);

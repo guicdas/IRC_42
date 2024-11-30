@@ -94,18 +94,17 @@ void	Server::loop( void ){
 					{
 						if (clientRead(&client) == 0)
 						{
-							std::cout << "client #" << client.fd << " gone.\n";
+							std::cout << "client #" << client.fd << " gone" << ENDL;
 							close(client.fd);
 							FD_CLR(client.fd, &this->fdList);
 							it = this->clients.erase(it);
-							std::cout << "Server has now " << this->clients.size() << " clients.\n";
+							std::cout << "Server has now " << this->clients.size() << " clients" << ENDL;
 						}
 						else
-						{
-							clientWrite(&client);
 							it++;
+						client.buffer.clear();
+						client.args.clear();
 						}
-					}
 					else
 						it++;
 				}

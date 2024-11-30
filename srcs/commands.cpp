@@ -3,33 +3,28 @@
 
 void	Server::nick( t_client *client, std::vector<std::string> args ){
 	std::string clientName;
-	std::size_t	pos;
 
-	if (args.at(1).size() < 1)
+	if (std::strcmp(args.at(1).c_str(), "\"") == 0)
 		client->buffer = "Erroneous nickname"; //432  -> ""
 	else
-	{
-		pos = args.at(1).find('\n', 0);
-		clientName = args.at(1).substr(0, pos);
-		std::cout << "setting client's name as " << clientName << std::endl;
-		std::cout << "(previous: " << client->name << ")" <<  std::endl;
-		if (std::strcmp(client->name.c_str(), clientName.c_str()) != 0)
-		{
-			client->buffer = "@time : GUIrcserv " + client->name + " !... NICK :" +clientName;
+	{  
+        clientName = args.at(1);
+		std::cout << "changing client's name from " << client->name << " to " << clientName <<  std::endl;
+		//if (std::strcmp(client->name.c_str(), clientName.c_str()) != 0)
+		//{
+			client->buffer = "@time : GUIrcserv " + client->name + " !... NICK :" + clientName + "\n";
 			client->name = clientName;
-		}
+		//}
 	}
 }
 
 void	Server::join( t_client *client, std::vector<std::string> args ){
 	std::string	channelName;
-	std::size_t	pos;
 
-	pos = args.at(1).find('\n', 0);
-	channelName = args.at(1).substr(0, pos);
-	std::cout << "setting channel's name as " << channelName << std::endl;
+	channelName = args.at(1);
+	std::cout << "creating channel " << channelName << ENDL;
 	if (channelName[0] != '#' && channelName[0] != '&')
-		client->buffer = channelName + " :No such channel\n";
+		client->buffer = "@time : GUIrcserv 403" +  client->name + channelName + " :No such channel\n";
 	else
 	{
 		t_channel ch;
@@ -39,7 +34,11 @@ void	Server::join( t_client *client, std::vector<std::string> args ){
 		this->channels.push_back(ch);
 
 		std::cout << "client " << client->name << " joined " << channelName << std::endl;
-		client->buffer = "now talking " + channelName + "\n";
+		client->buffer = "@time :" + client->name + "!~" + client->name + " JOIN " + channelName + "* :realname\n";
+        /*
+        MODE #canalasd
+        << WHO #canalasd %chtsunfra,152
+        */
 	}
 }
 
@@ -48,16 +47,18 @@ void	Server::list( t_client *client, std::vector<std::string> args ){
 
 	std::cout << "client " << client->name << " listing all channels: " << std::endl;
 
-	for (int i = 0; it != this->channels.end(); it++, i++)
+	for (; it != this->channels.end(); it++)
 	{
 		t_channel &ch = *it;
-		std::cout << ch.name << "\t\t" << i << ch.topic << std::endl;
+		client->buffer = ch.name + "\t\t" + ch.topic + ".\n";
 	}
 }
 
 void	Server::quit( t_client *client, std::vector<std::string> args ){
 	(void) args;
 
-	FD_CLR(client->fd, &this->fdRead);
+    close(client->fd);
+	FD_CLR(client->fd, &this->fdList);
+    // this->clients.erase(*client);
 	std::cout << "client " << client->name << " gone" << std::endl;
 }
