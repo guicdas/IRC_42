@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <iomanip>			// getline
 #include <sstream>			// stringstream
 #include <exception>
 #include <cstring>
@@ -16,19 +15,25 @@
 #include <netdb.h>			// getproto
 #include <vector>
 #include <map>
-#include <iterator>			// advance, distance
 
-//#define _XOPEN_SOURCE_EXTENDED 1	//Special behavior for C++: you must use the _XOPEN_SOURCE_EXTENDED 1 feature test macro.
-#define ENDL "." << std::endl
+# define ENDL			"|" << std::endl
+# define buf(c,err,str)	(putInBuf(c,err,str))
 
 typedef struct s_client{
 	int fd;
 	std::string buffer;
-	std::string	name;
 	std::vector< std::string > args;
+
+	std::string	nickname;
+	//They MUST NOT start with a character listed as a channel type, channel membership prefix, or prefix listed in the IRCv3 multi-prefix Extension.
+	/*	supostamente nao pode comecar com $ mas tb da erro se tiver no meio
+	n pode ter ':' a nao ser no inicio*/
+	std::string	realname;
+	std::string	username;
+	
 } t_client;
-/*A user may be joined to several channels at once, but a limit may be imposed by the server as to how many channels a client can be in at one time
-channel ceases to exist when the last client leaves it.*/
+
+/*A user may be joined to several channels at once, but a limit may be imposed by the server*/
 
 typedef struct s_channel{
 	std::vector< t_client > operators;
@@ -36,13 +41,14 @@ typedef struct s_channel{
 	std::string				name;
 	//may not contain any spaces, a control G / BELL ('^G', 0x07), or a comma
 	std::string				topic;
-	/*he topic is a line shown to all users when they join the channel, and all users in the channel are notified when the topic of a channel is changed*/
+	/*he topic is a line shown to all users when they join the channel, and all users in the channel are notified when the topic of a channel is changed
+	channel ceases to exist when the last client leaves it.*/
 } t_channel;
 
 class Server
 {
 	private:
-		std::map< std::string, void(Server::*)( t_client *, std::vector<std::string> )>	commands;
+		std::map< std::string, void(Server::*)( t_client *, std::string )>	commands;
 		std::vector< t_channel >	channels;
 		std::vector< t_client >		clients;
 		struct sockaddr_in			serverAddr;
@@ -68,17 +74,19 @@ class Server
 	void	acceptClient( void );
 
 	int		clientRead( t_client * );
-	void	parseCommand( t_client *client, std::string s );
+	void	parseCommand( t_client * , std::string );
 
 	void	clientWrite( t_client * );
 
-	void	list( t_client * , std::vector< std::string > );
-	void	join( t_client * , std::vector< std::string > );
-	void	nick( t_client * , std::vector< std::string > );
-	void	quit( t_client * , std::vector< std::string > );
+	void	list( t_client *, std::string );
+	void	join( t_client *, std::string );
+	void	nick( t_client *, std::string );
+	void	quit( t_client *, std::string );
+	void	mode( t_client *, std::string );
+	void	privmsg( t_client *, std::string );
 };
 
-std::vector<std::string>	ircSplit(std::string str, char c);
+void	putInBuf(t_client *, int, std::string );
 
 class FileException : public std::exception{
 	private:

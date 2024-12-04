@@ -32,15 +32,17 @@ void	Server::acceptClient( void ){
 	std::cout << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
 	FD_SET(clientSocket, &this->fdList);
 	this->maxFds = clientSocket > this->maxFds ? clientSocket :  this->maxFds;
-	this->clients.push_back((t_client){.fd=clientSocket, .buffer=""});
+	this->clients.push_back((t_client){.fd=clientSocket, .buffer="", .nickname="", \
+	.realname="", .username=""});
 }
 
 void	Server::createCommandMap( void ){
 	this->commands["JOIN"] = &Server::join;
 	this->commands["NICK"] = &Server::nick;
 	this->commands["LIST"] = &Server::list;
-
+	this->commands["MODE"] = &Server::mode;
 	this->commands["QUIT"] = &Server::quit;
+	this->commands["PRIVMSG"] = &Server::privmsg;
 }
 
 void	Server::createServerSocket( void ){
@@ -67,7 +69,6 @@ void	Server::createServerSocket( void ){
 }
 
 void	Server::loop( void ){
-	int	i = 0;
 	this->maxFds = this->serverSocket;
 	int	nFds;
 
