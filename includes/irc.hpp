@@ -17,7 +17,9 @@
 #include <map>
 
 # define ENDL			"|" << std::endl
-# define buf(c,err,str)	(putInBuf(c,err,str))
+# define buf(c,err,str,cmd)	(putInBuf(c,err,str,cmd))
+
+typedef struct s_channel t_channel;
 
 typedef struct s_client{
 	int fd;
@@ -30,6 +32,7 @@ typedef struct s_client{
 	n pode ter ':' a nao ser no inicio*/
 	std::string	realname;
 	std::string	username;
+	std::vector< t_channel > channels;
 	
 } t_client;
 
@@ -48,7 +51,7 @@ typedef struct s_channel{
 class Server
 {
 	private:
-		std::map< std::string, void(Server::*)( t_client *, std::string )>	commands;
+		std::map< std::string, void(Server::*)( t_client *, std::vector< std::string > )>	commands;
 		std::vector< t_channel >	channels;
 		std::vector< t_client >		clients;
 		struct sockaddr_in			serverAddr;
@@ -76,17 +79,25 @@ class Server
 	int		clientRead( t_client * );
 	void	parseCommand( t_client * , std::string );
 
-	void	clientWrite( t_client * );
+	void	list( t_client *, std::vector< std::string > );
+	void	join( t_client *, std::vector< std::string > );
+	void	nick( t_client *, std::vector< std::string > );
+	void	quit( t_client *, std::vector< std::string > );
+	void	mode( t_client *, std::vector< std::string > );
+	void	privmsg( t_client *, std::vector< std::string > );
 
-	void	list( t_client *, std::string );
-	void	join( t_client *, std::string );
-	void	nick( t_client *, std::string );
-	void	quit( t_client *, std::string );
-	void	mode( t_client *, std::string );
-	void	privmsg( t_client *, std::string );
+	int		checkChannelNameExists( std::string );
+	int		checkClientNickExists( std::string );
+	int		sendMsgToUser( std::string, std::string );
+
+	t_channel	*getChannel( std::string );
+	void		addUserToChannel( t_client *, t_channel * );
 };
 
-void	putInBuf(t_client *, int, std::string );
+void	clientWrite( t_client * );
+void	putInBuf( t_client *, int, std::string , std::string );
+int		isClientInChannel( t_client *, t_channel * );
+int		sendMsgToChannel( t_channel *, std::string , std::string );
 
 class FileException : public std::exception{
 	private:

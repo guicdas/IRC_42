@@ -42,7 +42,6 @@ void	Server::createCommandMap( void ){
 	this->commands["LIST"] = &Server::list;
 	this->commands["MODE"] = &Server::mode;
 	this->commands["QUIT"] = &Server::quit;
-	this->commands["PRIVMSG"] = &Server::privmsg;
 }
 
 void	Server::createServerSocket( void ){
