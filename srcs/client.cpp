@@ -2,51 +2,66 @@
 
 #define BUF_SIZE 4096
 
-void	Server::parseCommand( t_client *client, std::string s )
+void	Server::parseCommand( t_client &client, std::string s )
 {
 	std::istringstream	input(s);
 	std::string			arg;
 	
 	while (std::getline(input, arg, ' '))
-		client->args.push_back(arg);
-	
-	std::map<std::string, void(Server::*)( t_client *, std::vector< std::string > )>::iterator itMap = this->commands.find(client->args.at(0));
-	if (itMap != this->commands.end())
+		client.args.push_back(arg);
+
+	for (int i = 0; client.args.at(0)[i] ;i++)
 	{
-		(this->*itMap->second)(client, client->args);
-	}
+		if (client.args.at(0)[i] >= 'a' && client.args.at(0)[i] <= 'z')
+			client.args.at(0)[i] = toupper(client.args.at(0)[i]);
+	}	
+	
+	std::map<std::string, void(Server::*)( t_client & )>::iterator itMap = this->commands.find(client.args.at(0));
+	if (itMap != this->commands.end())
+		(this->*itMap->second)(client);
 	else
-		Server::privmsg(client, client->args);
+		Server::privmsg(client);
 }
 
-int	Server::clientRead( t_client *c )
+int	Server::clientRead( t_client &c )
 {
 	char		buffer[BUF_SIZE] = {0};
 	char		*commandLine;
 	std::string	command;
+	int			bytesRecv;
 
-	if (recv(c->fd, &buffer, BUF_SIZE, 0) < 1)
-		return (0);
+	bytesRecv = recv(c.fd, &buffer, BUF_SIZE, 0);
+	if (bytesRecv < 1)
+	{
+		if (bytesRecv < 0)
+			std::cerr << "recv error" << std::endl;
+		return (0);	
+	}
 
 	commandLine = std::strtok(buffer, "\r\n");
 	while (commandLine != NULL)
 	{
-		std::cout << "\ncommand >"<< commandLine << ENDL;
+		std::cout << "\ncmd >"<< commandLine << ENDL;
 		command = commandLine;
 		parseCommand(c, command);
-		clientWrite(c);
-		command.clear(); 						//necessario ?
+		c.buffer.clear();
+		c.args.clear();
 		commandLine = std::strtok(NULL, "\r\n");
 	}
+	c.buffer.clear();
+	c.args.clear();
 	return (1);
 }
 
-void	clientWrite( t_client *client )
+void	clientWrite( t_client &client )
 {
-	char		buffer[BUF_SIZE];
+	char	buffer[BUF_SIZE];
+	int		bytesSent;
 
-	std::strcpy(buffer, client->buffer.c_str());
-	std::cout << ">>" << buffer << ENDL;
-	if (send(client->fd, &buffer, std::strlen(buffer), 0) < 1)
-		std::cout << client->nickname << " (buffer vazio, n mandou)" << ENDL;
+	std::strcpy(buffer, client.buffer.c_str());
+
+	bytesSent = send(client.fd, buffer, std::strlen(buffer), 0);
+	if (std::strlen(buffer) > 0)
+		std::cout << "sent >>" << buffer << ENDL;
+	client.buffer.clear();
 }

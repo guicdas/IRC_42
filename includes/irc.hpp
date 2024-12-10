@@ -16,8 +16,14 @@
 #include <vector>
 #include <map>
 
-# define ENDL			"|" << std::endl
+# define ENDL				"." << std::endl
 # define buf(c,err,str,cmd)	(putInBuf(c,err,str,cmd))
+
+# define USERLEN 15 //maximo tamanho para username
+
+# define ERR_NEEDMOREPARAMS 	" :Not enough parameters"
+# define ERR_ALREADYREGISTERED 	" :You may not reregister"
+
 
 typedef struct s_channel t_channel;
 
@@ -51,7 +57,7 @@ typedef struct s_channel{
 class Server
 {
 	private:
-		std::map< std::string, void(Server::*)( t_client *, std::vector< std::string > )>	commands;
+		std::map< std::string, void(Server::*)( t_client & )>	commands;
 		std::vector< t_channel >	channels;
 		std::vector< t_client >		clients;
 		struct sockaddr_in			serverAddr;
@@ -76,28 +82,30 @@ class Server
 	void	loop( void );
 	void	acceptClient( void );
 
-	int		clientRead( t_client * );
-	void	parseCommand( t_client * , std::string );
+	int		clientRead( t_client & );
+	void	parseCommand( t_client & , std::string );
 
-	void	list( t_client *, std::vector< std::string > );
-	void	join( t_client *, std::vector< std::string > );
-	void	nick( t_client *, std::vector< std::string > );
-	void	quit( t_client *, std::vector< std::string > );
-	void	mode( t_client *, std::vector< std::string > );
-	void	privmsg( t_client *, std::vector< std::string > );
+	void	list( t_client & );
+	void	join( t_client & );
+	void	nick( t_client & );
+	void	quit( t_client & );
+	void	mode( t_client & );
+	void	user( t_client & );
+	void	cap( t_client & );
+	void	privmsg( t_client & );
 
 	int		checkChannelNameExists( std::string );
 	int		checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
 
 	t_channel	*getChannel( std::string );
-	void		addUserToChannel( t_client *, t_channel * );
+	void		addUserToChannel( t_client &, t_channel * );
 };
 
-void	clientWrite( t_client * );
-void	putInBuf( t_client *, int, std::string , std::string );
-int		isClientInChannel( t_client *, t_channel * );
-int		sendMsgToChannel( t_channel *, std::string , std::string );
+void	clientWrite( t_client & );
+void	putInBuf( t_client &, int, std::string , std::string );
+int		isClientInChannel( t_client &, t_channel * );
+int		sendMsgToChannel( t_channel &, std::string , std::string );
 
 class FileException : public std::exception{
 	private:

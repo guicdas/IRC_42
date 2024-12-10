@@ -42,6 +42,8 @@ void	Server::createCommandMap( void ){
 	this->commands["LIST"] = &Server::list;
 	this->commands["MODE"] = &Server::mode;
 	this->commands["QUIT"] = &Server::quit;
+	this->commands["USER"] = &Server::user;
+	this->commands["CAP"] = &Server::cap;
 }
 
 void	Server::createServerSocket( void ){
@@ -84,29 +86,28 @@ void	Server::loop( void ){
 		{
 			if (nFds < 0)
 				throw (FileException("Error: Select() negative return"));
-			if (!this->clients.empty())
+			std::vector<t_client>::iterator it = this->clients.begin();
+			while (it != this->clients.end())
 			{
-				std::vector<t_client>::iterator it = this->clients.begin();
-				while (it != this->clients.end())
+				t_client &client = *it;
+				if (FD_ISSET(client.fd, &this->fdRead))
 				{
-					t_client &client = *it;
-					if (FD_ISSET(client.fd, &this->fdRead))
+					if (clientRead(client) == 0)
 					{
-						if (clientRead(&client) == 0)
-						{
-							std::cout << "client #" << client.fd << " gone" << ENDL;
-							close(client.fd);
-							FD_CLR(client.fd, &this->fdList);
-							it = this->clients.erase(it);
-							std::cout << "Server has now " << this->clients.size() << " clients" << ENDL;
-						}
-						else
-							it++;
-						client.buffer.clear();
-						client.args.clear();
-						}
-					else
+						std::cout << "client #" << client.fd << " gone" << ENDL;
+						close(client.fd);
+						FD_CLR(client.fd, &this->fdList);
+						it = this->clients.erase(it);
+						std::cout << "Server has now " << this->clients.size() << " clients" << ENDL;
+					}
+					else	
 						it++;
+					}
+				else
+				{
+					if (FD_ISSET(client.fd, &this->fdWrite))
+						clientWrite(client);
+					it++;
 				}
 			}
 		}
