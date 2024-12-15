@@ -127,8 +127,6 @@ void	Server::user( t_client &client )
 		client.realname = client.args.at(4);
 		buf(client, 0, client.args.at(1) + " 0 * " + client.args.at(4), "USER");
 	}
-
-	
 }
 
 void	Server::cap( t_client &client )

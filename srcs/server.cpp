@@ -69,6 +69,28 @@ void	Server::createServerSocket( void ){
 		throw (FileException("Error: listen(): "));
 }
 
+void	Server::iterateClients( void )
+{
+	for (std::vector<t_client>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+	{
+		t_client &client = *it;
+		if (FD_ISSET(client.fd, &this->fdRead))
+		{
+			if (clientRead(client) == 0)
+			{
+				std::cout << "client #" << client.fd << " gone" << ENDL;
+				close(client.fd);
+				FD_CLR(client.fd, &this->fdList);
+				this->clients.erase(it);
+				it--;
+				std::cout << "Server has now " << this->clients.size() << " clients" << ENDL;
+			}
+		}
+		if (FD_ISSET(client.fd, &this->fdWrite))
+			clientWrite(client);
+	}
+}
+
 void	Server::loop( void ){
 	this->maxFds = this->serverSocket;
 	int	nFds;
@@ -80,37 +102,12 @@ void	Server::loop( void ){
 	{
 		this->fdWrite = this->fdRead = this->fdList;
 		nFds = select(this->maxFds + 1, &this->fdRead, &this->fdWrite, NULL, NULL);
+		if (nFds < 0)
+			throw (FileException("Error: Select() negative return"));
 		if (FD_ISSET(this->serverSocket, &this->fdRead))
 			this->acceptClient();
 		else 
-		{
-			if (nFds < 0)
-				throw (FileException("Error: Select() negative return"));
-			std::vector<t_client>::iterator it = this->clients.begin();
-			while (it != this->clients.end())
-			{
-				t_client &client = *it;
-				if (FD_ISSET(client.fd, &this->fdRead))
-				{
-					if (clientRead(client) == 0)
-					{
-						std::cout << "client #" << client.fd << " gone" << ENDL;
-						close(client.fd);
-						FD_CLR(client.fd, &this->fdList);
-						it = this->clients.erase(it);
-						std::cout << "Server has now " << this->clients.size() << " clients" << ENDL;
-					}
-					else	
-						it++;
-					}
-				else
-				{
-					if (FD_ISSET(client.fd, &this->fdWrite))
-						clientWrite(client);
-					it++;
-				}
-			}
-		}
+			iterateClients();
 	}
 }
 

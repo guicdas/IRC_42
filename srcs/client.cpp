@@ -26,42 +26,50 @@ void	Server::parseCommand( t_client &client, std::string s )
 int	Server::clientRead( t_client &c )
 {
 	char		buffer[BUF_SIZE] = {0};
-	char		*commandLine;
 	std::string	command;
 	int			bytesRecv;
+	size_t		found;
 
 	bytesRecv = recv(c.fd, &buffer, BUF_SIZE, 0);
 	if (bytesRecv < 1)
 	{
 		if (bytesRecv < 0)
-			std::cerr << "recv error" << std::endl;
-		return (0);	
+			throw(FileException("recv error"));
+		return (0);
 	}
+	command.append(buffer, bytesRecv);
+	//for (int i = 0; command[i]; i++)
+	//	std::cout << "\n" << i << " "<< command[i] << " "<< (int)command[i]<< "|";
 
-	commandLine = std::strtok(buffer, "\r\n");
-	while (commandLine != NULL)
-	{
-		std::cout << "\ncmd >"<< commandLine << ENDL;
-		command = commandLine;
-		parseCommand(c, command);
-		c.buffer.clear();
-		c.args.clear();
-		commandLine = std::strtok(NULL, "\r\n");
-	}
-	c.buffer.clear();
+	found = command.find('\r', 0);
+	if (found == std::string::npos)
+		throw(FileException("weird cmd"));
+	
+	std::cout << "\ncmd >"<< command.substr(0, found) << ENDL;
+	parseCommand(c, command.substr(0, found));
 	c.args.clear();
 	return (1);
 }
 
-void	clientWrite( t_client &client )
+void	clientWrite( t_client &c )
 {
 	char	buffer[BUF_SIZE];
-	int		bytesSent;
+	int		bytesToSend;
 
-	std::strcpy(buffer, client.buffer.c_str());
+	bytesToSend = c.buffer.size();
+	std::strcpy(buffer, c.buffer.c_str());
 
-	bytesSent = send(client.fd, buffer, std::strlen(buffer), 0);
-	if (std::strlen(buffer) > 0)
-		std::cout << "sent >>" << buffer << ENDL;
-	client.buffer.clear();
+	if (bytesToSend > 0)
+	{
+		std::memcpy(buffer, c.buffer.c_str(), bytesToSend);
+
+		while (bytesToSend > 0)
+		{
+			bytesToSend -= send(c.fd, buffer, std::strlen(buffer), 0);
+			if (bytesToSend < 0)
+				throw (FileException("send went wrong!"));
+		}
+		std::cout << "sent [" << c.buffer << "] to fd " << c.fd << ENDL;
+		c.buffer.clear();
+	}
 }

@@ -33,9 +33,7 @@ typedef struct s_client{
 	std::vector< std::string > args;
 
 	std::string	nickname;
-	//They MUST NOT start with a character listed as a channel type, channel membership prefix, or prefix listed in the IRCv3 multi-prefix Extension.
-	/*	supostamente nao pode comecar com $ mas tb da erro se tiver no meio
-	n pode ter ':' a nao ser no inicio*/
+	/*	n pode ter ':' a nao ser no inicio*/
 	std::string	realname;
 	std::string	username;
 	std::vector< t_channel > channels;
@@ -81,6 +79,7 @@ class Server
 	void	createCommandMap( void );
 	void	loop( void );
 	void	acceptClient( void );
+	void	iterateClients( void );
 
 	int		clientRead( t_client & );
 	void	parseCommand( t_client & , std::string );
