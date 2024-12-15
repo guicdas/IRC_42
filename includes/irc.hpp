@@ -21,6 +21,7 @@
 
 # define USERLEN 15 //maximo tamanho para username
 
+# define ERR_NOTONCHANNEL		" :You're not on that channel"
 # define ERR_NEEDMOREPARAMS 	" :Not enough parameters"
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
 
@@ -90,6 +91,7 @@ class Server
 	void	quit( t_client & );
 	void	mode( t_client & );
 	void	user( t_client & );
+	void	part( t_client & );
 	void	cap( t_client & );
 	void	privmsg( t_client & );
 
@@ -105,6 +107,7 @@ void	clientWrite( t_client & );
 void	putInBuf( t_client &, int, std::string , std::string );
 int		isClientInChannel( t_client &, t_channel * );
 int		sendMsgToChannel( t_channel &, std::string , std::string );
+void	eraseClientFromChannel( t_client &client, t_channel *channel );
 
 class FileException : public std::exception{
 	private:

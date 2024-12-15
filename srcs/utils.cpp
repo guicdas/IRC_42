@@ -22,10 +22,12 @@ void	putInBuf( t_client &c, int code, std::string extra , std::string command )
 			c.buffer += "432 " + c.nickname + " :Erroneous nickname";						break;
 		case 433:
 			c.buffer += "433 " + c.nickname + " " + extra + " :Nickname is already in use";	break;
+		case 442:
+			c.buffer += "442 " + c.nickname + ERR_NOTONCHANNEL; 							break;
 		case 461:
-			c.buffer += "461 " + c.nickname + " " + command + ERR_NEEDMOREPARAMS;				break;
+			c.buffer += "461 " + c.nickname + " " + command + ERR_NEEDMOREPARAMS;			break;
 		case 462:
-			c.buffer += "462 " + c.nickname + ERR_ALREADYREGISTERED;							break;
+			c.buffer += "462 " + c.nickname + ERR_ALREADYREGISTERED;						break;
 		default:
 			if (c.nickname.size() < 1)
 				c.buffer += command + " setting nick to: " + extra;

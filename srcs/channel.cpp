@@ -1,5 +1,20 @@
 #include "../includes/irc.hpp"
 
+void	eraseClientFromChannel( t_client &client, t_channel *channel )
+{
+	for (std::vector< t_client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)
+	{
+		t_client &c = *itC;
+		if (c.nickname == client.nickname)
+		{
+			/*if (operator)
+				channel.operators*/
+			channel->clients.erase(itC);
+			return ;
+		}
+	}
+}
+
 int	isClientInChannel( t_client &client, t_channel *channel )
 {
 	for (std::vector< t_client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)

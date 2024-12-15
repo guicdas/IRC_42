@@ -35,21 +35,19 @@ void	Server::join( t_client &client ){
 			if (isClientInChannel(client, getChannel(client.args.at(1))))
 				return ;
 			addUserToChannel(client, getChannel(client.args.at(1)));
+			std::cout << "client " << client.nickname << " joined " << client.args.at(1) << std::endl;
+			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
 		}
 		else
 		{
 			std::cout << "creating channel " << client.args.at(1) << ENDL;
 			t_channel ch;
 			ch.name = client.args.at(1);
-			ch.operators.push_back(client);
-			ch.clients.push_back(client);
-			this->channels.push_back(ch);
+			addUserToChannel(client, &ch);
 		}
 
-		std::cout << "client " << client.nickname << " joined " << client.args.at(1) << std::endl;
 		buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
         //Server::mode(client);
-		
 		/*
         MODE #canalasd
         << WHO #canalasd %chtsunfra,152
@@ -64,6 +62,27 @@ void	Server::list( t_client &client ){
 	{
 		t_channel &ch = *it;
 		client.buffer = ch.name + "\t\t" + ch.topic + ".\n";
+		clientWrite(client);
+	}
+}
+
+void	Server::part( t_client &client )
+{
+	if (checkChannelNameExists(client.args.at(1)))
+	{
+		buf(client, 442, "", "");
+		return ;
+	}//reason
+	for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
+	{
+		t_channel &channel = *itCh;
+		if (client.args.at(1) == channel.name)
+		{
+			std::cout << "client " << client.nickname << " leaving channel " << std::endl;
+			client.channels.erase(itCh);
+			eraseClientFromChannel(client, getChannel(channel.name));
+			return ;
+		}
 	}
 }
 
@@ -78,7 +97,7 @@ void	Server::mode( t_client &client ){
 	if (checkChannelNameExists(client.args.at(1)) == 1)
 		buf(client, 403, client.args.at(1), "");
 	else
-		buf(client, 324, client.args.at(1), ""); 
+		buf(client, 324, client.args.at(1), "");
 	//If <modestring> is not given, the RPL_CHANNELMODEIS (324) numeric is returned.
 	// buf(client, 329, ); Servers MAY also return the RPL_CREATIONTIME (329) numeric following RPL_CHANNELMODEIS.
 	/* Servers MAY choose to hide sensitive information such as channel keys when sending the current modes. */
