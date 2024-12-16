@@ -44,6 +44,7 @@ void	Server::createCommandMap( void ){
 	this->commands["QUIT"] = &Server::quit;
 	this->commands["USER"] = &Server::user;
 	this->commands["CAP"] = &Server::cap;
+	this->commands["WHO"] = &Server::who;
 }
 
 void	Server::createServerSocket( void ){
@@ -76,14 +77,11 @@ void	Server::iterateClients( void )
 		t_client &client = *it;
 		if (FD_ISSET(client.fd, &this->fdRead))
 		{
-			if (clientRead(client) == 0)
+			if (clientRead(client) == 1)
 			{
-				std::cout << "client #" << client.fd << " gone" << ENDL;
-				close(client.fd);
-				FD_CLR(client.fd, &this->fdList);
+				std::cout << "client #" << client.fd << " gone, " << "Server has now " << this->clients.size() << " clients" << ENDL;
 				this->clients.erase(it);
 				it--;
-				std::cout << "Server has now " << this->clients.size() << " clients" << ENDL;
 			}
 		}
 		if (FD_ISSET(client.fd, &this->fdWrite))

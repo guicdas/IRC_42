@@ -21,6 +21,10 @@
 
 # define USERLEN 15 //maximo tamanho para username
 
+# define ERR_USERNOTINCHANNEL	" :They aren't on that channel"
+# define ERR_CHANOPRIVSNEEDED	" :You're not a channel operator"
+# define ERR_NOSUCHNICK			" :Nickname is already in use"
+# define ERR_NOSUCHCHANNEL		" :No such channel"
 # define ERR_NOTONCHANNEL		" :You're not on that channel"
 # define ERR_NEEDMOREPARAMS 	" :Not enough parameters"
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
@@ -56,7 +60,7 @@ typedef struct s_channel{
 class Server
 {
 	private:
-		std::map< std::string, void(Server::*)( t_client & )>	commands;
+		std::map< std::string, int(Server::*)( t_client & )>	commands;
 		std::vector< t_channel >	channels;
 		std::vector< t_client >		clients;
 		struct sockaddr_in			serverAddr;
@@ -83,23 +87,27 @@ class Server
 	void	iterateClients( void );
 
 	int		clientRead( t_client & );
-	void	parseCommand( t_client & , std::string );
+	int		parseCommand( t_client & , std::string );
 
-	void	list( t_client & );
-	void	join( t_client & );
-	void	nick( t_client & );
-	void	quit( t_client & );
-	void	mode( t_client & );
-	void	user( t_client & );
-	void	part( t_client & );
-	void	cap( t_client & );
-	void	privmsg( t_client & );
+	int		list( t_client & );
+	int		join( t_client & );
+	int		nick( t_client & );
+	int		quit( t_client & );
+	int		mode( t_client & );
+	int		user( t_client & );
+	int		part( t_client & );
+	int		kick( t_client & );
+	int		cap( t_client & );
+	int		who( t_client & );
+	int		privmsg( t_client & );
 
 	int		checkChannelNameExists( std::string );
 	int		checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
+	void	eraseClientFromAllChannels( t_client & );
 
 	t_channel	*getChannel( std::string );
+	t_client	&getClient( std::string );
 	void		addUserToChannel( t_client &, t_channel * );
 };
 
@@ -107,7 +115,9 @@ void	clientWrite( t_client & );
 void	putInBuf( t_client &, int, std::string , std::string );
 int		isClientInChannel( t_client &, t_channel * );
 int		sendMsgToChannel( t_channel &, std::string , std::string );
-void	eraseClientFromChannel( t_client &client, t_channel *channel );
+void	eraseClientFromChannel( t_client &, t_channel * );
+int		isClientOp( t_client &, t_channel * );
+void	listChannelMembers( t_client &, t_channel * );
 
 class FileException : public std::exception{
 	private:

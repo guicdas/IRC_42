@@ -2,10 +2,12 @@
 
 #define BUF_SIZE 4096
 
-void	Server::parseCommand( t_client &client, std::string s )
+int	Server::parseCommand( t_client &client, std::string s )
 {
 	std::istringstream	input(s);
 	std::string			arg;
+	int					ret = 0;
+
 	
 	while (std::getline(input, arg, ' '))
 		client.args.push_back(arg);
@@ -16,11 +18,14 @@ void	Server::parseCommand( t_client &client, std::string s )
 			client.args.at(0)[i] = toupper(client.args.at(0)[i]);
 	}	
 	
-	std::map<std::string, void(Server::*)( t_client & )>::iterator itMap = this->commands.find(client.args.at(0));
+	std::map<std::string, int(Server::*)( t_client & )>::iterator itMap = this->commands.find(client.args.at(0));
 	if (itMap != this->commands.end())
-		(this->*itMap->second)(client);
+		ret = (this->*itMap->second)(client);
 	else
 		Server::privmsg(client);
+	
+	client.args.clear();
+	return (ret);
 }
 
 int	Server::clientRead( t_client &c )
@@ -35,7 +40,9 @@ int	Server::clientRead( t_client &c )
 	{
 		if (bytesRecv < 0)
 			throw(FileException("recv error"));
-		return (0);
+		close(c.fd);
+		FD_CLR(c.fd, &this->fdList);
+		return (1);
 	}
 	command.append(buffer, bytesRecv);
 	//for (int i = 0; command[i]; i++)
@@ -46,9 +53,7 @@ int	Server::clientRead( t_client &c )
 		throw(FileException("weird cmd"));
 	
 	std::cout << "\ncmd >"<< command.substr(0, found) << ENDL;
-	parseCommand(c, command.substr(0, found));
-	c.args.clear();
-	return (1);
+	return (parseCommand(c, command.substr(0, found)));
 }
 
 void	clientWrite( t_client &c )
