@@ -19,15 +19,14 @@ void	eraseClientFromChannel( t_client &client, t_channel *channel )
 	}
 }
 
-int	isClientInChannel( t_client &client, t_channel *channel )
+void	isClientInChannel( t_client &client, t_channel *channel )
 {
 	for (std::vector< t_client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)
 	{
 		t_client &c = *itC;
 		if (c.nickname == client.nickname)
-			return (1);
+			throw (441); //args 1
 	}
-	return (0);
 }
 
 int	sendMsgToChannel( t_channel &channel, std::string client, std::string msg )
@@ -46,15 +45,14 @@ int	sendMsgToChannel( t_channel &channel, std::string client, std::string msg )
 	return (0);
 }
 
-int	isClientOp( t_client &c, t_channel *channel )
+void	isClientOp( t_client &c, t_channel *channel )
 {
 	for (std::vector< t_client >::iterator itC = channel->operators.begin(); itC != channel->operators.end(); itC++)
 	{
 		t_client &client = *itC;
 		if (client.nickname == c.nickname)
-			return (1);
+			throw (482); //args 1
 	}
-	return (0);
 }
 
 void	listChannelMembers( t_client &c, t_channel *ch)
@@ -62,7 +60,7 @@ void	listChannelMembers( t_client &c, t_channel *ch)
 	for (std::vector< t_client >::iterator itC = ch->clients.begin(); itC != ch->clients.end(); itC++)
 	{
 		t_client &client = *itC;
-		buf(c, 0, "", ch->name);
+		buf(client, 0, "", ch->name); // verif se e client
 		clientWrite(c);
 	}
 }

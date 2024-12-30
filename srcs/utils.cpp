@@ -21,7 +21,7 @@ void	putInBuf( t_client &c, int code, std::string extra , std::string command )
 		case 432:
 			c.buffer += "432 " + c.nickname + " :Erroneous nickname";				break;
 		case 433:
-			c.buffer += "433 " + c.nickname + " :Nickname is already in use";		break;
+			c.buffer += "433 " + c.nickname + " :Nickname is already in use";		break; //client.args.at(1)
 		case 441:
 			c.buffer += "442 " + c.nickname + ERR_USERNOTINCHANNEL;					break;
 		case 442:
@@ -30,6 +30,8 @@ void	putInBuf( t_client &c, int code, std::string extra , std::string command )
 			c.buffer += "461 " + c.nickname + " " + command + ERR_NEEDMOREPARAMS;	break;
 		case 462:
 			c.buffer += "462 " + c.nickname + ERR_ALREADYREGISTERED;				break;
+		case 464:
+			c.buffer += "464 " + c.nickname + ERR_PASSWDMISMATCH;					break;
 		case 482:
 			c.buffer += "482 " + c.nickname + ERR_CHANOPRIVSNEEDED;					break;
 		default:
@@ -42,15 +44,14 @@ void	putInBuf( t_client &c, int code, std::string extra , std::string command )
 	c.buffer += "\n";
 }
 
-int	Server::checkChannelNameExists( std::string arg )
+void	Server::checkChannelNameExists( std::string arg )
 {
 	for (std::vector< t_channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
 		t_channel &channel = *itCh;
 		if (channel.name == arg)
-			return (1);
+			throw (403); //client.args.at(1)
 	}
-	return (0);
 }
 
 void	Server::addUserToChannel( t_client &client, t_channel *channel )
@@ -93,15 +94,14 @@ void	Server::eraseClientFromAllChannels( t_client &client )
 	}
 }
 
-int	Server::checkClientNickExists( std::string arg )
+void	Server::checkClientNickExists( std::string arg )
 {
 	for (std::vector< t_client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
 	{
 		t_client &c = *itC;
 		if (c.nickname == arg)
-			return (1);
+			throw (404); //client.args.at(2)
 	}
-	return (0);
 }
 
 int	Server::sendMsgToUser( std::string clientName, std::string msg )

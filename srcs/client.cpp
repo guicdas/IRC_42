@@ -8,13 +8,12 @@ int	Server::parseCommand( t_client &client, std::string s )
 	std::string			arg;
 	int					ret = 0;
 
-	
 	while (std::getline(input, arg, ' '))
 		client.args.push_back(arg);
 
 	for (int i = 0; client.args.at(0)[i] ;i++)
 	{
-		if (client.args.at(0)[i] >= 'a' && client.args.at(0)[i] <= 'z')
+		if (std::islower(client.args.at(0)[i]))
 			client.args.at(0)[i] = toupper(client.args.at(0)[i]);
 	}	
 	
@@ -45,9 +44,6 @@ int	Server::clientRead( t_client &c )
 		return (1);
 	}
 	command.append(buffer, bytesRecv);
-	//for (int i = 0; command[i]; i++)
-	//	std::cout << "\n" << i << " "<< command[i] << " "<< (int)command[i]<< "|";
-
 	found = command.find('\r', 0);
 	if (found == std::string::npos)
 		throw(FileException("weird cmd"));

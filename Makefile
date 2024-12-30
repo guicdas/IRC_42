@@ -6,7 +6,7 @@ SRCS_DIR		= srcs
 OBJS_DIR		= objs
 
 NAME			= ircserv
-SOURCES			= $(wildcard srcs/*.cpp)
+SOURCES			= $(wildcard srcs/*.cpp) $(wildcard srcs/*/*.cpp)
 SOURCES_O		= $(SOURCES:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
 all:	$(NAME)
@@ -16,6 +16,7 @@ $(NAME):		$(SOURCES_O)
 
 $(OBJS_DIR):
 	mkdir -p objs
+	mkdir -p objs/commands
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp | $(OBJS_DIR)
 	$(CXX) $(CXXFLAGS) -c $^ -o $@

@@ -31,9 +31,17 @@ void	Server::acceptClient( void ){
 	std::cout << "New client #" << clientSocket << " from ";
 	std::cout << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
 	FD_SET(clientSocket, &this->fdList);
-	this->maxFds = clientSocket > this->maxFds ? clientSocket :  this->maxFds;
-	this->clients.push_back((t_client){.fd=clientSocket, .buffer="", .nickname="", \
-	.realname="", .username=""});
+	this->maxFds = clientSocket > this->maxFds ? clientSocket : this->maxFds;
+	this->clients.push_back((t_client){
+		.fd = clientSocket,
+		.buffer = "",
+		.args =	std::vector<std::string>(),
+		.nickname =	"",
+		.realname =	"",
+		.username =	"",
+		.channels = std::vector<t_channel>(),
+		.registered = 0
+	});
 }
 
 void	Server::createCommandMap( void ){
@@ -45,6 +53,7 @@ void	Server::createCommandMap( void ){
 	this->commands["USER"] = &Server::user;
 	this->commands["CAP"] = &Server::cap;
 	this->commands["WHO"] = &Server::who;
+	this->commands["PASS"] = &Server::pass;
 }
 
 void	Server::createServerSocket( void ){

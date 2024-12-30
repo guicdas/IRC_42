@@ -28,21 +28,20 @@
 # define ERR_NOTONCHANNEL		" :You're not on that channel"
 # define ERR_NEEDMOREPARAMS 	" :Not enough parameters"
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
-
+# define ERR_PASSWDMISMATCH		" :Password incorrect"
+# define ERR_USERSDONTMATCH		" :Cant change mode for other users"
 
 typedef struct s_channel t_channel;
 
 typedef struct s_client{
-	int fd;
-	std::string buffer;
-	std::vector< std::string > args;
-
-	std::string	nickname;
-	/*	n pode ter ':' a nao ser no inicio*/
-	std::string	realname;
-	std::string	username;
-	std::vector< t_channel > channels;
-	
+	int							fd;
+	std::string					buffer;
+	std::vector< std::string >	args;
+	std::string					nickname;
+	std::string					realname;
+	std::string					username;
+	std::vector< t_channel >	channels;
+	bool						registered;
 } t_client;
 
 /*A user may be joined to several channels at once, but a limit may be imposed by the server*/
@@ -97,12 +96,13 @@ class Server
 	int		user( t_client & );
 	int		part( t_client & );
 	int		kick( t_client & );
+	int		pass( t_client & );
 	int		cap( t_client & );
 	int		who( t_client & );
 	int		privmsg( t_client & );
 
-	int		checkChannelNameExists( std::string );
-	int		checkClientNickExists( std::string );
+	void	checkChannelNameExists( std::string );
+	void	checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
 	void	eraseClientFromAllChannels( t_client & );
 
@@ -113,10 +113,10 @@ class Server
 
 void	clientWrite( t_client & );
 void	putInBuf( t_client &, int, std::string , std::string );
-int		isClientInChannel( t_client &, t_channel * );
+void	isClientInChannel( t_client &, t_channel * );
 int		sendMsgToChannel( t_channel &, std::string , std::string );
 void	eraseClientFromChannel( t_client &, t_channel * );
-int		isClientOp( t_client &, t_channel * );
+void	isClientOp( t_client &, t_channel * );
 void	listChannelMembers( t_client &, t_channel * );
 
 class FileException : public std::exception{

@@ -1,27 +1,5 @@
 #include "../includes/irc.hpp"
 
-
-int	Server::nick( t_client &client ){
-	std::string	forbiddenChars[11] = {",*.?!@\"$# "};
-
-	// falta o ':' que so pode estar em primeiro
-	if (client.args.size() < 2)
-		buf(client, 431, "", "");
-	else if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
-		buf(client, 432, "", "");
-	else if (std::strcmp(client.nickname.c_str(), client.args.at(1).c_str()) == 0)
-		return ;
-	else if (checkClientNickExists(client.args.at(1)) == 1)
-		buf(client, 433, client.args.at(1), "");
-	else
-	{
-		std::cout << "changing client's name from " << client.nickname << " to " << client.args.at(1) <<  std::endl;
-		buf(client, 0, client.args.at(1), "NICK");
-		client.nickname = client.args.at(1);
-	}
-	return (0);
-}
-
 int	Server::join( t_client &client ){
 	std::string	forbiddenChars[4] = {",\x07 "};
 
@@ -34,7 +12,7 @@ int	Server::join( t_client &client ){
 		if (checkChannelNameExists(client.args.at(1)) == 1)
 		{
 			if (isClientInChannel(client, getChannel(client.args.at(1))))
-				return ;
+				return (0); // verif se n é erro
 			addUserToChannel(client, getChannel(client.args.at(1)));
 			std::cout << "client " << client.nickname << " joined " << client.args.at(1) << std::endl;
 			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
@@ -76,21 +54,17 @@ int	Server::part( t_client &client )
 
 	while (std::getline(channels, channelName, ','))
 	{
-		if (checkChannelNameExists(channelName))
-			buf(client, 403, "", "");
-		else if (isClientInChannel(client, getChannel(channelName)))
-			buf(client, 442, "", "");
-		else
+		checkChannelNameExists(channelName);
+		isClientInChannel(client, getChannel(channelName)); // 441
+
+		for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 		{
-			for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
+			t_channel &channel = *itCh;
+			if (channelName == channel.name)
 			{
-				t_channel &channel = *itCh;
-				if (channelName == channel.name)
-				{
-					client.channels.erase(itCh);
-					eraseClientFromChannel(client, getChannel(channel.name));
-					buf(client, 0, ": Leaving", "PART");
-				}
+				client.channels.erase(itCh);
+				eraseClientFromChannel(client, getChannel(channel.name));
+				buf(client, 0, ": Leaving", "PART");
 			}
 		}
 	}
@@ -109,26 +83,14 @@ int	Server::quit( t_client &client ){
 	return (1);
 }
 
-int	Server::mode( t_client &client ){
-	if (checkChannelNameExists(client.args.at(1)) == 1)
-		buf(client, 403, client.args.at(1), "");
-	else
-		buf(client, 324, client.args.at(1), "");
-	//If <modestring> is not given, the RPL_CHANNELMODEIS (324) numeric is returned.
-	// buf(client, 329, ); Servers MAY also return the RPL_CREATIONTIME (329) numeric following RPL_CHANNELMODEIS.
-	/* Servers MAY choose to hide sensitive information such as channel keys when sending the current modes. */
-
-	return (0);
-}
-
 int	Server::who( t_client &client ){
-	if (checkChannelNameExists(client.args.at(1)) == 1)
+	/*if (checkChannelNameExists(client.args.at(1)) == 1)
 		listChannelMembers(client, getChannel(client.args.at(1)));
 	else if (checkClientNickExists(client.args.at(1)) == 1)
 	{
 		buf(client, 0, "", "");
 		clientWrite(client);
-	}
+	}*/
 	
 	buf(client, 0, " :End of /who list", "");
 	clientWrite(client);
@@ -137,33 +99,31 @@ int	Server::who( t_client &client ){
 }
 
 int	Server::kick( t_client &client ){
-	if (checkChannelNameExists(client.args.at(1)) == 1)
-		buf(client, 403, client.args.at(1), "");
-	else if (checkClientNickExists(client.args.at(2)) == 1)
-		buf(client, 404, client.args.at(2), "");
-	else if (isClientOp(client, getChannel(client.args.at(1))))
-		buf(client, 482, client.args.at(1), "");
-	else if (isClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1))))
-		buf(client, 441, client.args.at(1), "");
-	else
-	{
+	try{
+		checkChannelNameExists(client.args.at(1));
+		checkClientNickExists(client.args.at(2));
+		isClientOp(client, getChannel(client.args.at(1)));
+		isClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1)));
+		
 		t_client &c = getClient(client.args.at(2));
 		close(c.fd);
 		FD_CLR(c.fd, &this->fdList);
 		eraseClientFromAllChannels(c);
 	}
+	catch (std::exception &e){
+		buf(client, (int)e.what(), "", "KICK");
+	}
 	return (0);
 }
 
 
-int	Server::privmsg( t_client &client )
-{
-	if (client.args.size() < 2)
-		buf(client, 411, "", "");
-	else if (client.args.size() < 3)
-		buf(client, 412, "", "");
-	else
-	{
+int	Server::privmsg( t_client &client ){
+	try{
+		if (client.args.size() < 2)
+			throw (411);
+		if (client.args.size() < 2)
+			throw (412);
+
 		std::cout << "client " << client.nickname << " sending \"" << client.args.at(1) << "\"" << std::endl;
 		for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 		{
@@ -171,39 +131,15 @@ int	Server::privmsg( t_client &client )
 			if (client.args.at(1) == channel.name)
 			{
 				sendMsgToChannel(channel, client.args.at(1), client.args.at(2));
-				return ;
+				return (0); // verif return
 			}
 		}
-		if (checkChannelNameExists(client.args.at(2)) == 1)
-			buf(client, 324, client.args.at(1), "");
-		else if (checkClientNickExists(client.args.at(1)) == 1)
-			sendMsgToUser(client.args.at(1), client.args.at(2));
+		checkChannelNameExists(client.args.at(2)); // 324
+		checkClientNickExists(client.args.at(1)); // SE Nao existir da erro?
+		sendMsgToUser(client.args.at(1), client.args.at(2));
 	}
-	return (0);
-}
-
-int	Server::user( t_client &client )
-{
-	if (client.args.size() < 4)
-		buf(client, 461, "", "USER");
-	else if (client.username.size() != 0 || client.realname.size() != 0 )
-		buf(client, 462, "", "");
-	else if (client.args.at(2) != "0" && client.args.at(3) != "*")
-		return ;
-	else
-	{
-		std::cout << "setting " << client.nickname << "'s user to " << client.args.at(1) << " and real name to " << client.args.at(4) << std::endl;
-		client.username = client.args.at(1);
-
-		//must be the last parameter because it may contain SPACE (' ', 0x20) characters, and should be prefixed with a colon (:) if required
-		client.realname = client.args.at(4);
-		buf(client, 0, client.args.at(1) + " 0 * " + client.args.at(4), "USER");
+	catch (std::exception &e){
+		buf(client, (int)e.what(), "", "PRIVMSG");
 	}
-	return (0);
-}
-
-int	Server::cap( t_client &client )
-{
-	(void) client;
 	return (0);
 }
