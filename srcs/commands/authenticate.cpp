@@ -11,7 +11,7 @@ static void	verifyValidNick( t_client &c ){
 // falta o ':' que so pode estar em primeiro
     if (std::strpbrk(c.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
 		throw (432);
-}
+} 
 
 int	Server::nick( t_client &client ){
 	std::string	forbiddenChars[11] = {",*.?!@\"$# "};
@@ -23,15 +23,16 @@ int	Server::nick( t_client &client ){
         verifyValidNick(client);
         if (std::strcmp(client.nickname.c_str(), client.args.at(1).c_str()) == 0)
 		    return (0);
-        if (checkClientNickExists(client.args.at(1)) == 1)
-		    throw (433);
+        //if (checkClientNickExists(client.args.at(1)) == 1)
+		//    throw (433);
 
         std::cout << "Changing client's name from " << client.nickname << " to " << client.args.at(1) <<  std::endl;
 		buf(client, 0, client.args.at(1), "NICK");
 		client.nickname = client.args.at(1);
     }
 	catch (std::exception &e){
-		buf(client, (int)e.what(), "", "NICK");
+		buf(client, 2, "", "NICK");
+		//buf(client, (int)e.what(), "", "NICK");
 	}
 	return (0);
 }
@@ -58,8 +59,10 @@ int	Server::user( t_client &client )
 		buf(client, 0, client.args.at(1) + " 0 * " + client.args.at(4), "USER");
     }
     catch (std::exception &e){
-		buf(client, (int)e.what(), "", "USER");
+		buf(client, 2, "", "NICK");
+		//buf(client, (int)e.what(), "", "USER");
 	}
+	return 0;
 }
 
 int	Server::pass( t_client &client )
@@ -71,7 +74,8 @@ int	Server::pass( t_client &client )
 		client.registered++;
 	}
 	catch (std::exception &e){
-		buf(client, (int)e.what(), "", "PASS");
+		buf(client, 3, "", "NICK");
+		//buf(client, (int)e.what(), "", "PASS");
 	}
 	return (0);
 }

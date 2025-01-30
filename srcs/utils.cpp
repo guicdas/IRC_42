@@ -44,16 +44,6 @@ void	putInBuf( t_client &c, int code, std::string extra , std::string command )
 	c.buffer += "\n";
 }
 
-void	Server::checkChannelNameExists( std::string arg )
-{
-	for (std::vector< t_channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
-	{
-		t_channel &channel = *itCh;
-		if (channel.name == arg)
-			throw (403); //client.args.at(1)
-	}
-}
-
 void	Server::addUserToChannel( t_client &client, t_channel *channel )
 {
 	std::cout << "Adding user " << client.nickname << " to channel " << channel->name << ENDL;
@@ -91,16 +81,6 @@ void	Server::eraseClientFromAllChannels( t_client &client )
 	{
 		t_channel &c = *itCh;
 		eraseClientFromChannel(client, getChannel(c.name));
-	}
-}
-
-void	Server::checkClientNickExists( std::string arg )
-{
-	for (std::vector< t_client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
-	{
-		t_client &c = *itC;
-		if (c.nickname == arg)
-			throw (404); //client.args.at(2)
 	}
 }
 

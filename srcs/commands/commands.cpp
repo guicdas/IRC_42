@@ -9,15 +9,15 @@ int	Server::join( t_client &client ){
 		buf(client, 403, client.args.at(1), "");
 	else
 	{
-		if (checkChannelNameExists(client.args.at(1)) == 1)
+		//if (checkChannelNameExists(client.args.at(1)) == 1)
 		{
-			if (isClientInChannel(client, getChannel(client.args.at(1))))
-				return (0); // verif se n é erro
+			//if (isClientInChannel(client, getChannel(client.args.at(1))))
+			//	return (0); // verif se n é erro
 			addUserToChannel(client, getChannel(client.args.at(1)));
 			std::cout << "client " << client.nickname << " joined " << client.args.at(1) << std::endl;
 			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
 		}
-		else
+		//else
 		{
 			std::cout << "creating channel " << client.args.at(1) << ENDL;
 			t_channel ch;
@@ -55,7 +55,7 @@ int	Server::part( t_client &client )
 	while (std::getline(channels, channelName, ','))
 	{
 		checkChannelNameExists(channelName);
-		isClientInChannel(client, getChannel(channelName)); // 441
+		checkClientInChannel(client, getChannel(channelName)); // 441
 
 		for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 		{
@@ -102,8 +102,8 @@ int	Server::kick( t_client &client ){
 	try{
 		checkChannelNameExists(client.args.at(1));
 		checkClientNickExists(client.args.at(2));
-		isClientOp(client, getChannel(client.args.at(1)));
-		isClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1)));
+		checkClientOp(client, getChannel(client.args.at(1)));
+		checkClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1)));
 		
 		t_client &c = getClient(client.args.at(2));
 		close(c.fd);
@@ -111,7 +111,8 @@ int	Server::kick( t_client &client ){
 		eraseClientFromAllChannels(c);
 	}
 	catch (std::exception &e){
-		buf(client, (int)e.what(), "", "KICK");
+		buf(client, 2, "", "NICK");
+		//buf(client, (int)e.what(), "", "KICK");
 	}
 	return (0);
 }
@@ -139,7 +140,8 @@ int	Server::privmsg( t_client &client ){
 		sendMsgToUser(client.args.at(1), client.args.at(2));
 	}
 	catch (std::exception &e){
-		buf(client, (int)e.what(), "", "PRIVMSG");
+		buf(client, 2, "", "NICK");
+		//buf(client, (int)e.what(), "", "PRIVMSG");
 	}
 	return (0);
 }

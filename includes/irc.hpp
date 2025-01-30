@@ -113,10 +113,10 @@ class Server
 
 void	clientWrite( t_client & );
 void	putInBuf( t_client &, int, std::string , std::string );
-void	isClientInChannel( t_client &, t_channel * );
+void	checkClientInChannel( t_client &, t_channel * );
 int		sendMsgToChannel( t_channel &, std::string , std::string );
 void	eraseClientFromChannel( t_client &, t_channel * );
-void	isClientOp( t_client &, t_channel * );
+void	checkClientOp( t_client &, t_channel * );
 void	listChannelMembers( t_client &, t_channel * );
 
 class FileException : public std::exception{
