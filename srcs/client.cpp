@@ -1,19 +1,32 @@
 #include "../includes/irc.hpp"
 
-Client::Client( int	clientSocket ){
-	this->fd = clientSocket;
-	this->buffer = "";
-	this->args =	std::vector<std::string>();
-	this->nickname =	"";
-	this->realname =	"";
-	this->username =	"";
-	this->channels = std::vector< Channel >();
-	this->registered = 0;
+Client::Client(int clientSocket) : 
+	fd(clientSocket), 
+	nickname(""), 
+	realname(""), 
+	username(""),
+    registered(false), 
+	buffer(""),
+	channels(),
+	args()
+{
+	if (clientSocket < 0)
+		PRINT_COLOR(RED, "Invalid client socket!");
 }
 
-Client::Client( Client const &c ){
-	*this = c;
+
+Client::Client(const Client &c) 
+{
+    this->fd = c.fd;
+    this->nickname = c.nickname;
+    this->realname = c.realname;
+    this->username = c.username;
+    this->registered = c.registered;
+    this->channels = c.channels;
+    this->args = c.args;
+    this->buffer = c.buffer;
 }
+
 
 Client	&Client::operator=( Client const &c ){
 	if (this == &c)
@@ -22,8 +35,6 @@ Client	&Client::operator=( Client const &c ){
 }
 
 Client::~Client( void ){}
-
-
 
 
 std::string	Client::getNick( void ){

@@ -20,6 +20,15 @@
 # define ENDL				"." << std::endl
 # define buf(c,err,str,cmd)	(putInBuf(c,err,str,cmd))
 
+# define RESET          "\033[0m"
+# define RED            "\033[31m"
+# define GREEN          "\033[32m"
+# define MAGENTA        "\033[35m"
+# define YELLOW         "\033[33m"
+# define BLUE           "\033[34m"
+# define CYAN           "\033[36m"
+# define PRINT_COLOR(color, text) (std::cout << color << text << RESET << std::endl)
+
 # define USERLEN 15 //maximo tamanho para username
 
 # define ERR_USERNOTINCHANNEL	" :They aren't on that channel"
@@ -59,9 +68,9 @@ class Client
 		bool						registered;
 	
 	public:
+		std::string					buffer;
 		std::vector< Channel >		channels;
 		std::vector< std::string >	args;
-		std::string					buffer;
 
 		Client( int	clientSocket );
 		Client( Client const &c );
@@ -81,17 +90,18 @@ class Server
 {
 	private:
 		std::map< std::string, int(Server::*)( Client & )>	commands;
-		std::vector< Channel >	channels;
-		std::vector< Client >		clients;
-		struct sockaddr_in			serverAddr;
 		std::string					password;
 		unsigned int				port;
+		struct sockaddr_in			serverAddr;
 		int							serverSocket;
 		fd_set						fdList;
 		fd_set						fdWrite;
 		fd_set						fdRead;
 		fd_set						fdExcep;
 		int							maxFds;
+
+		std::vector< Client >		clients;
+		std::vector< Channel >		channels;
 
 	public:
 		Server( void );
@@ -122,7 +132,12 @@ class Server
 	int		who( Client & );
 	int		privmsg( Client & );
 
+	int		topic( Client &);
+	int		invite( Client &);
+
 	void	checkChannelNameExists( std::string );
+	int		isChannelNameExist( std::string arg );
+	int		isClientInChannel( std::string nick, std::string channel );
 	void	checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
 	void	eraseClientFromAllChannels( Client & );

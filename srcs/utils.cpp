@@ -6,6 +6,8 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 	switch (code){
 		case 324:
 			c.buffer += "324 " + c.getNick() + " " + extra;							break;
+		case 331:
+			c.buffer += "331 " + c.getNick() + " " + extra;							break;
 		case 401:
 			c.buffer += "401 " + c.getNick() + ERR_NOSUCHNICK;						break;
 		case 403:
@@ -13,7 +15,7 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 		case 404:
 			c.buffer += "404 " + c.getNick() + " :Cannot send to nick/channel";		break;
 		case 411:
-			c.buffer += "411 " + c.getNick() + " :No recipient given (PRIVMSG)";		break;
+			c.buffer += "411 " + c.getNick() + " :No recipient given (PRIVMSG)";	break;
 		case 412:
 			c.buffer += "412 " + c.getNick() + " :No text to send";					break;
 		case 431:

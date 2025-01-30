@@ -2,10 +2,12 @@
 
 Server::Server( void ){}
 
-Server::Server( char **av ){
-	this->password = av[2];
-	this->port = std::atoi(av[1]);
-}
+Server::Server( char **av ) : 
+	password(av[2]),
+	port(std::atoi(av[1])),
+	clients(),
+	channels()
+{}
 
 Server::Server( Server const &c ){
 	*this = c;
@@ -19,23 +21,30 @@ Server	&Server::operator=( Server const &c ){
 
 Server::~Server( void ){}
 
-void	Server::acceptClient( void ){
-	struct sockaddr_in	clientAddr;
-	socklen_t			csin_len;
-	int					clientSocket;
+void Server::acceptClient(void) {
+    struct sockaddr_in clientAddr;
+    socklen_t csin_len = sizeof(clientAddr);
+    int clientSocket;
 
-	bzero(&clientAddr, sizeof(struct sockaddr_in));
+    memset(&clientAddr, 0, sizeof(clientAddr));
 
-  	csin_len = sizeof(clientAddr);
-	clientSocket = accept(this->serverSocket, (struct sockaddr*)&clientAddr, &csin_len);
-	std::cout << "New client #" << clientSocket << " from ";
-	std::cout << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
-	FD_SET(clientSocket, &this->fdList);
-	this->maxFds = clientSocket > this->maxFds ? clientSocket : this->maxFds;
+    clientSocket = accept(this->serverSocket, (struct sockaddr*)&clientAddr, &csin_len);
+    if (clientSocket < 0) {
+        PRINT_COLOR(RED, "Failed to accept client!");
+        return;
+    }
+	
+    std::cout << "New client #" << clientSocket << " from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
 
-	Client c(clientSocket);
-	this->clients.push_back(c);
+	if (clientSocket < 0)
+		PRINT_COLOR(RED, "Invalid socket!");
+    FD_SET(clientSocket, &this->fdList);
+    this->maxFds = std::max(clientSocket, this->maxFds);
+
+	Client c = Client(clientSocket);
+    this->clients.push_back(c);
 }
+
 
 void	Server::createCommandMap( void ){
 	this->commands["JOIN"] = &Server::join;
@@ -47,6 +56,9 @@ void	Server::createCommandMap( void ){
 	this->commands["CAP"] = &Server::cap;
 	this->commands["WHO"] = &Server::who;
 	this->commands["PASS"] = &Server::pass;
+
+	this->commands["TOPIC"] = &Server::topic;
+	this->commands["INVITE"] = &Server::invite;
 }
 
 void	Server::createServerSocket( void ){
@@ -72,24 +84,26 @@ void	Server::createServerSocket( void ){
 		throw (FileException("Error: listen(): "));
 }
 
-void	Server::iterateClients( void )
-{
-	for (std::vector< Client >::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+void Server::iterateClients(void) {
+    for (std::vector<Client>::iterator it = this->clients.begin(); it != this->clients.end();)
 	{
-		Client &client = *it;
-		if (FD_ISSET(client.getFd(), &this->fdRead))
+        Client &client = *it;
+        if (FD_ISSET(client.getFd(), &this->fdRead))
 		{
-			if (clientRead(client) == 1)
-			{
-				std::cout << "client #" << client.getFd() << " gone, " << "Server has now " << this->clients.size() << " clients" << ENDL;
-				this->clients.erase(it);
-				it--;
-			}
-		}
-		if (FD_ISSET(client.getFd(), &this->fdWrite))
-			clientWrite(client);
-	}
+            if (clientRead(client) == 1) {
+                std::cout << "client #" << client.getFd() << " gone, " 
+                          << "Server has now " << this->clients.size() << " clients" << ENDL;
+                it = this->clients.erase(it);
+                continue;
+            }
+        }
+        if (FD_ISSET(client.getFd(), &this->fdWrite)) {
+            clientWrite(client);
+        }
+        ++it;
+    }
 }
+
 
 void	Server::loop( void ){
 	this->maxFds = this->serverSocket;

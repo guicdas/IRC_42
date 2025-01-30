@@ -3,12 +3,13 @@
 int	Server::join( Client &client ){
 	std::string	forbiddenChars[4] = {",\x07 "};
 
-	try{
-		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
-			throw(403);
-		if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
-			throw(403);
-		if (ChannelNameExists(client.args.at(1)) == 1)
+	if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
+		buf(client, 403, client.args.at(1), "");
+	else if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
+		buf(client, 403, client.args.at(1), "");
+	else
+	{
+		//if (checkChannelNameExists(client.args.at(1)) == 1)
 		{
 			//if (isClientInChannel(client, getChannel(client.args.at(1))))
 			//	return (0); // verif se n é erro
@@ -16,7 +17,7 @@ int	Server::join( Client &client ){
 			std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
 			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
 		}
-		else
+		//else
 		{
 			std::cout << "creating channel " << client.args.at(1) << ENDL;
 			Channel ch;
@@ -25,12 +26,12 @@ int	Server::join( Client &client ){
 		}
 
 		buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
+        //Server::mode(client);
+		/*
+        MODE #canalasd
+        << WHO #canalasd %chtsunfra,152
+        */
 	}
-	catch(std::exception &e){
-		buf(client, 403, client.args.at(1), "");
-		//buf(client, 403, client.args.at(1), "");
-	}
-	
 	return (0);
 }
 
@@ -142,5 +143,38 @@ int	Server::privmsg( Client &client ){
 		buf(client, 2, "", "NICK");
 		//buf(client, (int)e.what(), "", "PRIVMSG");
 	}
+	return (0);
+}
+
+
+int	Server::topic( Client &client){
+	if (client.args[0] != "")
+		PRINT_COLOR(RED, client.args[0]);
+	if (client.args[1] != "")
+		PRINT_COLOR(RED, client.args[1]);
+	/*try
+	{
+		if (client.args.size() < 2)
+			throw (331);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}*/
+	return (0);
+}
+
+int	Server::invite( Client &client){
+	PRINT_COLOR(RED, client.args[0]);
+	PRINT_COLOR(RED, client.args[1]);
+	/*try
+	{
+		if (client.args.size() < 2)
+			throw (331);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}*/
 	return (0);
 }

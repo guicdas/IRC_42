@@ -19,7 +19,7 @@ int main( int ac, char **av ){
 	{
 		validate_arguments(ac, av);
 
-		Server	Server(av);
+		Server Server(av);
 		Server.createServerSocket();
 		Server.createCommandMap();
 		Server.loop();

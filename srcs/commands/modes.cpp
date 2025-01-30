@@ -29,6 +29,7 @@ static void channelmode( Client &c ){
 
 int	Server::mode( Client &client ){
 	try{
+        
 		//if (checkClientNickExists(client.args.at(1)) == 1)
 			usermode(client);
 		//else if (checkChannelNameExists(client.args.at(1)) == 1)
