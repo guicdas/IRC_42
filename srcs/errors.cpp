@@ -2,9 +2,9 @@
 
 void	Server::checkChannelNameExists( std::string arg )
 {
-	for (std::vector< t_channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
+	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
-		t_channel &channel = *itCh;
+		Channel &channel = *itCh;
 		if (channel.name == arg)
 			throw (403); //client.args.at(1)
 	}
@@ -12,30 +12,30 @@ void	Server::checkChannelNameExists( std::string arg )
 
 void	Server::checkClientNickExists( std::string arg )
 {
-	for (std::vector< t_client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
+	for (std::vector< Client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
 	{
-		t_client &c = *itC;
-		if (c.nickname == arg)
+		Client &c = *itC;
+		if (c.getNick() == arg)
 			throw (404); //client.args.at(2)
 	}
 }
 
-void	checkClientInChannel( t_client &client, t_channel *channel )
+void	checkClientInChannel( Client &client, Channel *channel )
 {
-	for (std::vector< t_client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)
+	for (std::vector< Client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)
 	{
-		t_client &c = *itC;
-		if (c.nickname == client.nickname)
+		Client &c = *itC;
+		if (c.getNick() == client.getNick())
 			throw (441); //args 1
 	}
 }
 
-void	checkClientOp( t_client &c, t_channel *channel )
+void	checkClientOp( Client &c, Channel *channel )
 {
-	for (std::vector< t_client >::iterator itC = channel->operators.begin(); itC != channel->operators.end(); itC++)
+	for (std::vector< Client >::iterator itC = channel->operators.begin(); itC != channel->operators.end(); itC++)
 	{
-		t_client &client = *itC;
-		if (client.nickname == c.nickname)
+		Client &client = *itC;
+		if (c.getNick() == client.getNick())
 			throw (482); //args 1
 	}
 }

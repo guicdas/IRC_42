@@ -1,7 +1,7 @@
 #include "../includes/irc.hpp"
 
-static void usermode( t_client &c ){
-    if (c.args.at(1) != c.nickname)
+static void usermode( Client &c ){
+    if (c.args.at(1) != c.getNick())
 		throw (502);
 	//If <modestring> is not given, 
     if (c.args.size() > 1)
@@ -9,12 +9,13 @@ static void usermode( t_client &c ){
     //execute mode
 }
 
-static int  checkPrivileges( t_client &c ){
+static int  checkPrivileges( Client &c ){
     //std::iterator :: operators
+	(void)c;
     return (1);
 }
 
-static void channelmode( t_client &c ){
+static void channelmode( Client &c ){
 
    // if (checkChannelNameExists(c.args.at(1)) == 1)
 	//	throw (403); //client at arg 1
@@ -26,7 +27,7 @@ static void channelmode( t_client &c ){
     //execute mode
 }
 
-int	Server::mode( t_client &client ){
+int	Server::mode( Client &client ){
 	try{
 		//if (checkClientNickExists(client.args.at(1)) == 1)
 			usermode(client);

@@ -28,3 +28,17 @@ int main( int ac, char **av ){
 		std::cerr << e.what() << std::endl;
 	}
 }
+
+FileException::FileException( const char* msg ){
+	this->msg = msg;
+	if (std::strcmp(strerror(errno), "Success") != 0)
+	{
+		this->msg += " ";
+		this->msg += strerror(errno);
+	}
+}
+FileException::~FileException( void ) throw() {}
+const char * FileException::what( void ) const throw() {
+	return (msg.c_str());
+}
+

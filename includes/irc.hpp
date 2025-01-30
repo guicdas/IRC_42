@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 
+
 # define ENDL				"." << std::endl
 # define buf(c,err,str,cmd)	(putInBuf(c,err,str,cmd))
 
@@ -31,37 +32,57 @@
 # define ERR_PASSWDMISMATCH		" :Password incorrect"
 # define ERR_USERSDONTMATCH		" :Cant change mode for other users"
 
-typedef struct s_channel t_channel;
+class Client;
 
-typedef struct s_client{
-	int							fd;
-	std::string					buffer;
-	std::vector< std::string >	args;
-	std::string					nickname;
-	std::string					realname;
-	std::string					username;
-	std::vector< t_channel >	channels;
-	bool						registered;
-} t_client;
+class Channel
+{
 
-/*A user may be joined to several channels at once, but a limit may be imposed by the server*/
+	public:
+		std::vector< Client > operators;
+		std::vector< Client > clients;
+		std::string				name;
+		//may not contain any spaces, a control G / BELL ('^G', 0x07), or a comma
+		std::string				topic;
+		/*he topic is a line shown to all users when they join the channel, and all users in the channel are notified when the topic of a channel is changed
+		channel ceases to exist when the last client leaves it.*/
 
-typedef struct s_channel{
-	std::vector< t_client > operators;
-	std::vector< t_client > clients;
-	std::string				name;
-	//may not contain any spaces, a control G / BELL ('^G', 0x07), or a comma
-	std::string				topic;
-	/*he topic is a line shown to all users when they join the channel, and all users in the channel are notified when the topic of a channel is changed
-	channel ceases to exist when the last client leaves it.*/
-} t_channel;
+
+};
+
+class Client
+{
+	private:
+		int							fd;
+		std::string					nickname;
+		std::string					realname;
+		std::string					username;
+		bool						registered;
+	
+	public:
+		std::vector< Channel >		channels;
+		std::vector< std::string >	args;
+		std::string					buffer;
+
+		Client( int	clientSocket );
+		Client( Client const &c );
+		Client	&operator=( Client const &c );
+		~Client( void );
+
+	std::string	getNick( void );
+	int			getFd( void );
+	void		setUser( std::string );
+	void		setRealname( std::string );
+
+	void		verifyClientRegistered( void );
+	void		verifyValidNick( void );
+};
 
 class Server
 {
 	private:
-		std::map< std::string, int(Server::*)( t_client & )>	commands;
-		std::vector< t_channel >	channels;
-		std::vector< t_client >		clients;
+		std::map< std::string, int(Server::*)( Client & )>	commands;
+		std::vector< Channel >	channels;
+		std::vector< Client >		clients;
 		struct sockaddr_in			serverAddr;
 		std::string					password;
 		unsigned int				port;
@@ -85,39 +106,41 @@ class Server
 	void	acceptClient( void );
 	void	iterateClients( void );
 
-	int		clientRead( t_client & );
-	int		parseCommand( t_client & , std::string );
+	int			clientRead( Client & );
+	int			parseCommand( Client &client, std::string s );
 
-	int		list( t_client & );
-	int		join( t_client & );
-	int		nick( t_client & );
-	int		quit( t_client & );
-	int		mode( t_client & );
-	int		user( t_client & );
-	int		part( t_client & );
-	int		kick( t_client & );
-	int		pass( t_client & );
-	int		cap( t_client & );
-	int		who( t_client & );
-	int		privmsg( t_client & );
+	int		list( Client & );
+	int		join( Client & );
+	int		nick( Client & );
+	int		quit( Client & );
+	int		mode( Client & );
+	int		user( Client & );
+	int		part( Client & );
+	int		kick( Client & );
+	int		pass( Client & );
+	int		cap( Client & );
+	int		who( Client & );
+	int		privmsg( Client & );
 
 	void	checkChannelNameExists( std::string );
 	void	checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
-	void	eraseClientFromAllChannels( t_client & );
+	void	eraseClientFromAllChannels( Client & );
 
-	t_channel	*getChannel( std::string );
-	t_client	&getClient( std::string );
-	void		addUserToChannel( t_client &, t_channel * );
+	Channel	*getChannel( std::string );
+	Client	&getClient( std::string );
+	void		addUserToChannel( Client &, Channel * );
 };
 
-void	clientWrite( t_client & );
-void	putInBuf( t_client &, int, std::string , std::string );
-void	checkClientInChannel( t_client &, t_channel * );
-int		sendMsgToChannel( t_channel &, std::string , std::string );
-void	eraseClientFromChannel( t_client &, t_channel * );
-void	checkClientOp( t_client &, t_channel * );
-void	listChannelMembers( t_client &, t_channel * );
+void	clientWrite( Client & );
+void	putInBuf( Client &, int, std::string , std::string );
+
+	void	listChannelMembers( Client &, Channel * );
+	int		sendMsgToChannel( Channel &, std::string, std::string );
+	void	eraseClientFromChannel( Client &, Channel * );
+
+	void	checkClientInChannel( Client &, Channel * );
+	void	checkClientOp( Client &, Channel * );
 
 class FileException : public std::exception{
 	private:

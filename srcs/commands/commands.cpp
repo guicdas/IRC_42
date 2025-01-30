@@ -1,53 +1,52 @@
 #include "../includes/irc.hpp"
 
-int	Server::join( t_client &client ){
+int	Server::join( Client &client ){
 	std::string	forbiddenChars[4] = {",\x07 "};
 
-	if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
-		buf(client, 403, client.args.at(1), "");
-	else if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
-		buf(client, 403, client.args.at(1), "");
-	else
-	{
-		//if (checkChannelNameExists(client.args.at(1)) == 1)
+	try{
+		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
+			throw(403);
+		if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
+			throw(403);
+		if (ChannelNameExists(client.args.at(1)) == 1)
 		{
 			//if (isClientInChannel(client, getChannel(client.args.at(1))))
 			//	return (0); // verif se n é erro
 			addUserToChannel(client, getChannel(client.args.at(1)));
-			std::cout << "client " << client.nickname << " joined " << client.args.at(1) << std::endl;
+			std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
 			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
 		}
-		//else
+		else
 		{
 			std::cout << "creating channel " << client.args.at(1) << ENDL;
-			t_channel ch;
+			Channel ch;
 			ch.name = client.args.at(1);
 			addUserToChannel(client, &ch);
 		}
 
 		buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
-        //Server::mode(client);
-		/*
-        MODE #canalasd
-        << WHO #canalasd %chtsunfra,152
-        */
 	}
+	catch(std::exception &e){
+		buf(client, 403, client.args.at(1), "");
+		//buf(client, 403, client.args.at(1), "");
+	}
+	
 	return (0);
 }
 
-int	Server::list( t_client &client ){
-	std::cout << "client " << client.nickname << " listing all channels: " << std::endl;
+int	Server::list( Client &client ){
+	std::cout << "client " << client.getNick() << " listing all channels: " << std::endl;
 
-	for (std::vector< t_channel >::iterator it = this->channels.begin(); it != this->channels.end(); it++)
+	for (std::vector< Channel >::iterator it = this->channels.begin(); it != this->channels.end(); it++)
 	{
-		t_channel &ch = *it;
+		Channel &ch = *it;
 		client.buffer = ch.name + "\t\t" + ch.topic + ".\n";
 		clientWrite(client);
 	}
 	return (0);
 }
 
-int	Server::part( t_client &client )
+int	Server::part( Client &client )
 {
 	std::istringstream	channels(client.args.at(1));
 	std::string	channelName;
@@ -57,9 +56,9 @@ int	Server::part( t_client &client )
 		checkChannelNameExists(channelName);
 		checkClientInChannel(client, getChannel(channelName)); // 441
 
-		for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
+		for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 		{
-			t_channel &channel = *itCh;
+			Channel &channel = *itCh;
 			if (channelName == channel.name)
 			{
 				client.channels.erase(itCh);
@@ -71,19 +70,19 @@ int	Server::part( t_client &client )
 	return (0);
 }
 
-int	Server::quit( t_client &client ){
+int	Server::quit( Client &client ){
 	buf(client, 0 , client.args.at(2), "QUIT");
 	clientWrite(client);
 
-	close(client.fd);
-	FD_CLR(client.fd, &this->fdList);
+	close(client.getFd());
+	FD_CLR(client.getFd(), &this->fdList);
 
 	eraseClientFromAllChannels(client);
 	
 	return (1);
 }
 
-int	Server::who( t_client &client ){
+int	Server::who( Client &client ){
 	/*if (checkChannelNameExists(client.args.at(1)) == 1)
 		listChannelMembers(client, getChannel(client.args.at(1)));
 	else if (checkClientNickExists(client.args.at(1)) == 1)
@@ -98,16 +97,16 @@ int	Server::who( t_client &client ){
 	return (0);
 }
 
-int	Server::kick( t_client &client ){
+int	Server::kick( Client &client ){
 	try{
 		checkChannelNameExists(client.args.at(1));
 		checkClientNickExists(client.args.at(2));
 		checkClientOp(client, getChannel(client.args.at(1)));
 		checkClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1)));
 		
-		t_client &c = getClient(client.args.at(2));
-		close(c.fd);
-		FD_CLR(c.fd, &this->fdList);
+		Client &c = getClient(client.args.at(2));
+		close(c.getFd());
+		FD_CLR(c.getFd(), &this->fdList);
 		eraseClientFromAllChannels(c);
 	}
 	catch (std::exception &e){
@@ -118,17 +117,17 @@ int	Server::kick( t_client &client ){
 }
 
 
-int	Server::privmsg( t_client &client ){
+int	Server::privmsg( Client &client ){
 	try{
 		if (client.args.size() < 2)
 			throw (411);
 		if (client.args.size() < 2)
 			throw (412);
 
-		std::cout << "client " << client.nickname << " sending \"" << client.args.at(1) << "\"" << std::endl;
-		for (std::vector< t_channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
+		std::cout << "client " << client.getNick() << " sending \"" << client.args.at(1) << "\"" << std::endl;
+		for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 		{
-			t_channel &channel = *itCh;
+			Channel &channel = *itCh;
 			if (client.args.at(1) == channel.name)
 			{
 				sendMsgToChannel(channel, client.args.at(1), client.args.at(2));

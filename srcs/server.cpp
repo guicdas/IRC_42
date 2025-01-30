@@ -32,16 +32,9 @@ void	Server::acceptClient( void ){
 	std::cout << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
 	FD_SET(clientSocket, &this->fdList);
 	this->maxFds = clientSocket > this->maxFds ? clientSocket : this->maxFds;
-	this->clients.push_back((t_client){
-		.fd = clientSocket,
-		.buffer = "",
-		.args =	std::vector<std::string>(),
-		.nickname =	"",
-		.realname =	"",
-		.username =	"",
-		.channels = std::vector<t_channel>(),
-		.registered = 0
-	});
+
+	Client c(clientSocket);
+	this->clients.push_back(c);
 }
 
 void	Server::createCommandMap( void ){
@@ -81,19 +74,19 @@ void	Server::createServerSocket( void ){
 
 void	Server::iterateClients( void )
 {
-	for (std::vector<t_client>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+	for (std::vector< Client >::iterator it = this->clients.begin(); it != this->clients.end(); it++)
 	{
-		t_client &client = *it;
-		if (FD_ISSET(client.fd, &this->fdRead))
+		Client &client = *it;
+		if (FD_ISSET(client.getFd(), &this->fdRead))
 		{
 			if (clientRead(client) == 1)
 			{
-				std::cout << "client #" << client.fd << " gone, " << "Server has now " << this->clients.size() << " clients" << ENDL;
+				std::cout << "client #" << client.getFd() << " gone, " << "Server has now " << this->clients.size() << " clients" << ENDL;
 				this->clients.erase(it);
 				it--;
 			}
 		}
-		if (FD_ISSET(client.fd, &this->fdWrite))
+		if (FD_ISSET(client.getFd(), &this->fdWrite))
 			clientWrite(client);
 	}
 }
@@ -117,17 +110,3 @@ void	Server::loop( void ){
 			iterateClients();
 	}
 }
-
-FileException::FileException( const char* msg ){
-	this->msg = msg;
-	if (std::strcmp(strerror(errno), "Success") != 0)
-	{
-		this->msg += " ";
-		this->msg += strerror(errno);
-	}
-}
-FileException::~FileException( void ) throw() {}
-const char * FileException::what( void ) const throw() {
-	return (msg.c_str());
-}
-
