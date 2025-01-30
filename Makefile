@@ -1,5 +1,5 @@
 CXX				= c++
-CXXFLAGS		= -Iincludes/ -std=c++98 -Wall -Wextra -Werror
+CXXFLAGS		= -Iincludes/ -std=c++98 -Wall -Wextra -Werror #-fsanitize=address
 RM				= rm -fr
 
 SRCS_DIR		= srcs

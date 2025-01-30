@@ -5,13 +5,13 @@ int	Server::join( Client &client ){
 
 	try{
 		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
-			throw(403);
+			throw(403);//nao e 403
 		if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
-			throw(403);
+			throw(403);//nao e 403
 		if (ChannelNameExists(client.args.at(1)) == 1)
 		{
-			//if (isClientInChannel(client, getChannel(client.args.at(1))))
-			//	return (0); // verif se n é erro
+			if (isClientInChannel(client, getChannel(client.args.at(1))))
+				return (0); // verif se n é erro
 			addUserToChannel(client, getChannel(client.args.at(1)));
 			std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
 			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
@@ -24,13 +24,13 @@ int	Server::join( Client &client ){
 			addUserToChannel(client, &ch);
 		}
 
-		buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
+		buf(client, 0, client.args.at(1) + "* :" + client.getRealname() + "\n" , "JOIN");
 	}
 	catch(std::exception &e){
-		buf(client, 403, client.args.at(1), "");
+		buf(client, 403, client.args.at(1), "");//nao e 403
 		//buf(client, 403, client.args.at(1), "");
 	}
-	
+
 	return (0);
 }
 

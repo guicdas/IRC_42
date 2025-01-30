@@ -11,29 +11,29 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 		case 403:
 			c.buffer += "403 " + c.getNick() + ERR_NOSUCHCHANNEL;					break;
 		case 404:
-			c.buffer += "404 " + c.getNick() + " :Cannot send to nick/channel";		break;
+			c.buffer += "404 " + c.getNick() + ERR_NOSUCHNICK;						break;
 		case 411:
-			c.buffer += "411 " + c.getNick() + " :No recipient given (PRIVMSG)";		break;
+			c.buffer += "411 " + c.getNick() + ERR_NORECIPIENT;						break;
 		case 412:
-			c.buffer += "412 " + c.getNick() + " :No text to send";					break;
+			c.buffer += "412 " + c.getNick() + ERR_NOTEXTTOSEND;					break;
 		case 431:
-			c.buffer += "431 " + c.getNick() + " :No nickname given";				break;
+			c.buffer += "431 " + c.getNick() + ERR_NONICKNAMEGIVEN;					break;
 		case 432:
-			c.buffer += "432 " + c.getNick() + " :Erroneous nickname";				break;
+			c.buffer += "432 " + c.getNick() + ERR_ERRONEUSNICKNAME;				break;
 		case 433:
-			c.buffer += "433 " + c.getNick() + " :Nickname is already in use";		break; //client.args.at(1)
+			c.buffer += "433 " + c.getNick() + ERR_NICKNAMEINUSE;					break; //client.args.at(1)
 		case 441:
-			c.buffer += "442 " + c.getNick() + ERR_USERNOTINCHANNEL;					break;
+			c.buffer += "442 " + c.getNick() + ERR_USERNOTINCHANNEL;				break;
 		case 442:
 			c.buffer += "441 " + c.getNick() + ERR_NOTONCHANNEL; 					break;
 		case 461:
-			c.buffer += "461 " + c.getNick() + " " + command + ERR_NEEDMOREPARAMS;	break;
+			c.buffer += "461 " + c.getNick() + ERR_NEEDMOREPARAMS;					break;
 		case 462:
 			c.buffer += "462 " + c.getNick() + ERR_ALREADYREGISTERED;				break;
 		case 464:
 			c.buffer += "464 " + c.getNick() + ERR_PASSWDMISMATCH;					break;
 		case 482:
-			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;					break;
+			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;				break;
 		default:
 			if (c.getNick().size() < 1)
 				c.buffer += command + " setting nick to: " + extra;
@@ -142,6 +142,28 @@ int	sendMsgToChannel( Channel &channel, std::string client, std::string msg )
 			buf(c, 0, c.getNick() + " :" + msg + ".\n", "PRIVMSG");
 			clientWrite(c);
 		}
+	}
+	return (0);
+}
+
+int	Server::ChannelNameExists( std::string arg )
+{
+	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
+	{
+		Channel &channel = *itCh;
+		if (channel.name == arg)
+			return (1);
+	}
+	return (0);
+}
+
+int	isClientInChannel( Client &client, Channel *channel )
+{
+	for (std::vector< Client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)
+	{
+		Client &c = *itC;
+		if (c.getNick() == client.getNick())
+			return (1);
 	}
 	return (0);
 }

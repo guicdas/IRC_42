@@ -31,6 +31,12 @@
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
 # define ERR_PASSWDMISMATCH		" :Password incorrect"
 # define ERR_USERSDONTMATCH		" :Cant change mode for other users"
+# define ERR_ERRONEUSNICKNAME	" :Erroneous nickname"
+# define ERR_NONICKNAMEGIVEN	" :No nickname given"
+# define ERR_NORECIPIENT		" :No recipient given (command)"
+# define ERR_NOTEXTTOSEND		" :No text to send"
+//# define ERR_NOSUCHNICK			" :Cannot send to nick/channel"
+# define ERR_NICKNAMEINUSE		" :Nickname is already in use"
 
 class Client;
 
@@ -52,11 +58,13 @@ class Channel
 class Client
 {
 	private:
-		int							fd;
-		std::string					nickname;
-		std::string					realname;
-		std::string					username;
-		bool						registered;
+		int				fd;
+		std::string		nickname;
+		std::string		realname;
+		std::string		username;
+		bool			registered;
+		std::string		hostname;
+		std::string		id;
 	
 	public:
 		std::vector< Channel >		channels;
@@ -69,9 +77,14 @@ class Client
 		~Client( void );
 
 	std::string	getNick( void );
+	std::string	getRealname( void );
 	int			getFd( void );
 	void		setUser( std::string );
 	void		setRealname( std::string );
+
+	void 		resolveHostname( int );
+	void 		setHostname(const std::string& hostname);
+	void 		setId( void );
 
 	void		verifyClientRegistered( void );
 	void		verifyValidNick( void );
@@ -129,9 +142,12 @@ class Server
 
 	Channel	*getChannel( std::string );
 	Client	&getClient( std::string );
-	void		addUserToChannel( Client &, Channel * );
+	void	addUserToChannel( Client &, Channel * );
+	
+	int		ChannelNameExists( std::string );
 };
 
+	int		isClientInChannel( Client &, Channel * );
 void	clientWrite( Client & );
 void	putInBuf( Client &, int, std::string , std::string );
 

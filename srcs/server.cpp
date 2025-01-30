@@ -33,8 +33,7 @@ void	Server::acceptClient( void ){
 	FD_SET(clientSocket, &this->fdList);
 	this->maxFds = clientSocket > this->maxFds ? clientSocket : this->maxFds;
 
-	Client c(clientSocket);
-	this->clients.push_back(c);
+	this->clients.push_back(Client(clientSocket));
 }
 
 void	Server::createCommandMap( void ){
@@ -76,7 +75,7 @@ void	Server::iterateClients( void )
 {
 	for (std::vector< Client >::iterator it = this->clients.begin(); it != this->clients.end(); it++)
 	{
-		Client &client = *it;
+		Client client = *it;
 		if (FD_ISSET(client.getFd(), &this->fdRead))
 		{
 			if (clientRead(client) == 1)
