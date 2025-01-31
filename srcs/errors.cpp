@@ -10,7 +10,7 @@ void	Server::checkChannelNameExists( std::string arg )
 	}
 }
 
-int	Server::isChannelNameExist( std::string arg )
+int		Server::isChannelNameExist( std::string arg )
 {
 	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
@@ -21,7 +21,7 @@ int	Server::isChannelNameExist( std::string arg )
 	return (0);
 }
 
-int Server::isClientInChannel(std::string nick, std::string channelName)
+int		Server::isClientInChannel(std::string nick, std::string channelName)
 {
 	for (std::vector<Channel>::iterator itCh = this->channels.begin(); itCh != this->channels.end(); ++itCh)
 	{

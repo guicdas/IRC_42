@@ -25,7 +25,7 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 		case 433:
 			c.buffer += "433 " + c.getNick() + " :Nickname is already in use";		break; //client.args.at(1)
 		case 441:
-			c.buffer += "442 " + c.getNick() + ERR_USERNOTINCHANNEL;					break;
+			c.buffer += "442 " + c.getNick() + ERR_USERNOTINCHANNEL;				break;
 		case 442:
 			c.buffer += "441 " + c.getNick() + ERR_NOTONCHANNEL; 					break;
 		case 461:
@@ -35,7 +35,9 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 		case 464:
 			c.buffer += "464 " + c.getNick() + ERR_PASSWDMISMATCH;					break;
 		case 482:
-			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;					break;
+			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;				break;
+		case 1001:
+			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 					break;
 		default:
 			if (c.getNick().size() < 1)
 				c.buffer += command + " setting nick to: " + extra;

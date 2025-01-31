@@ -27,6 +27,9 @@ int main( int ac, char **av ){
 	catch(const std::exception &e){
 		std::cerr << e.what() << std::endl;
 	}
+	catch (int e) {
+        std::cerr << "Caught an int exception: " << e << std::endl;
+    }
 }
 
 FileException::FileException( const char* msg ){

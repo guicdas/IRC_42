@@ -1,36 +1,46 @@
 #include "../includes/irc.hpp"
 
+/// TODO:
+//	So pode correr commandos normais qunado estiver autenticado
 int	Server::join( Client &client ){
-	std::string	forbiddenChars[4] = {",\x07 "};
-
-	if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
-		buf(client, 403, client.args.at(1), "");
-	else if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
-		buf(client, 403, client.args.at(1), "");
-	else
+	try
 	{
-		//if (checkChannelNameExists(client.args.at(1)) == 1)
-		{
-			//if (isClientInChannel(client, getChannel(client.args.at(1))))
-			//	return (0); // verif se n é erro
-			addUserToChannel(client, getChannel(client.args.at(1)));
-			std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
-			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
-		}
-		//else
-		{
-			std::cout << "creating channel " << client.args.at(1) << ENDL;
-			Channel ch;
-			ch.name = client.args.at(1);
-			addUserToChannel(client, &ch);
-		}
+		std::string	forbiddenChars[4] = {",\x07 "};
 
-		buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
-        //Server::mode(client);
-		/*
-        MODE #canalasd
-        << WHO #canalasd %chtsunfra,152
-        */
+		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
+			buf(client, 403, client.args.at(1), "");
+		else if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
+			buf(client, 403, client.args.at(1), "");
+		else
+		{
+			if (isChannelNameExist(client.args.at(1)) == 1)
+			{
+				if (isClientInChannel(client.getNick(), client.args[1]))
+					return (0); // verif se n é erro
+				addUserToChannel(client, getChannel(client.args.at(1)));
+				std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
+				//buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
+				buf(client, 1001, client.args[1], "JOIN");
+			}
+			//else
+			{
+				std::cout << "creating channel " << client.args.at(1) << ENDL;
+				Channel ch;
+				ch.name = client.args.at(1);
+				addUserToChannel(client, &ch);
+			}
+
+			buf(client, 1001, client.args[1], "JOIN");
+			//Server::mode(client);
+			/*
+			MODE #canalasd
+			<< WHO #canalasd %chtsunfra,152
+			*/
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
 	}
 	return (0);
 }
@@ -49,24 +59,31 @@ int	Server::list( Client &client ){
 
 int	Server::part( Client &client )
 {
-	std::istringstream	channels(client.args.at(1));
-	std::string	channelName;
-
-	while (std::getline(channels, channelName, ','))
+	try
 	{
-		checkChannelNameExists(channelName);
-		checkClientInChannel(client, getChannel(channelName)); // 441
+		std::istringstream	channels(client.args.at(1));
+		std::string	channelName;
 
-		for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
+		while (std::getline(channels, channelName, ','))
 		{
-			Channel &channel = *itCh;
-			if (channelName == channel.name)
+			checkChannelNameExists(channelName);
+			checkClientInChannel(client, getChannel(channelName)); // 441
+
+			for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 			{
-				client.channels.erase(itCh);
-				eraseClientFromChannel(client, getChannel(channel.name));
-				buf(client, 0, ": Leaving", "PART");
+				Channel &channel = *itCh;
+				if (channelName == channel.name)
+				{
+					client.channels.erase(itCh);
+					eraseClientFromChannel(client, getChannel(channel.name));
+					buf(client, 0, ": Leaving", "PART");
+				}
 			}
 		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
 	}
 	return (0);
 }
