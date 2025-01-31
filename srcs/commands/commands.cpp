@@ -6,28 +6,29 @@ int	Server::join( Client &client ){
 	try
 	{
 		std::string	forbiddenChars[4] = {",\x07 "};
+		std::string channelName = client.args[1];
+		Channel		channel;
 
-		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
+		if (channelName[0] != '#' && channelName[0] != '&')
 			buf(client, 403, client.args.at(1), "");
-		else if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
+		else if (std::strpbrk(channelName.c_str(), forbiddenChars->c_str()) != NULL)
 			buf(client, 403, client.args.at(1), "");
 		else
 		{
-			if (isChannelNameExist(client.args.at(1)) == 1)
+			if (doesChannelNameExist(channelName))
 			{
-				if (isClientInChannel(client.getNick(), client.args[1]))
-					return (0); // verif se n é erro
-				addUserToChannel(client, getChannel(client.args.at(1)));
-				std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
-				//buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
+				if (isClientInChannel(client.getNick(), channelName))
+					throw(443);	// NO SPECIFIC ERR_CODE
+				addUserToChannel(client, getChannel(channelName));
+				PRINT_COLOR(GREEN, "client " + client.getNick() + " joined " + channelName);
 				buf(client, 1001, client.args[1], "JOIN");
 			}
-			//else
+			else
 			{
-				std::cout << "creating channel " << client.args.at(1) << ENDL;
+				PRINT_COLOR(GREEN, "creating channel " + channelName);
 				Channel ch;
-				ch.name = client.args.at(1);
-				addUserToChannel(client, &ch);
+				ch.name = channelName;
+				addUserToChannel(client, &ch);	// Should be added as operator
 			}
 
 			buf(client, 1001, client.args[1], "JOIN");
@@ -38,9 +39,9 @@ int	Server::join( Client &client ){
 			*/
 		}
 	}
-	catch(const std::exception& e)
+	catch(int e)
 	{
-		std::cerr << e.what() << '\n';
+		buf(client, e, "", "JOIN");
 	}
 	return (0);
 }
@@ -115,20 +116,31 @@ int	Server::who( Client &client ){
 	return (0);
 }
 
+
 int	Server::kick( Client &client ){
 	try{
-		checkChannelNameExists(client.args.at(1));
-		checkClientNickExists(client.args.at(2));
-		checkClientOp(client, getChannel(client.args.at(1)));
-		checkClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1)));
+		if (client.args.size() < 2)
+			throw (411);
+		std::string kickedName	= client.args[2];
+		Client		kicked		= getClient(kickedName);
+		std::string channelName = client.args[1];
+		Channel		*channel 	= getChannel(channelName);
+
+		//checkClientOp(client, channel);
+		checkClientInChannel(kicked, channel);
 		
-		Client &c = getClient(client.args.at(2));
-		close(c.getFd());
-		FD_CLR(c.getFd(), &this->fdList);
-		eraseClientFromAllChannels(c);
+		// O CLIENTE É KICKED DO CANAL NAO DO SERVIDOR
+
+		//close(kicked.getFd());
+		//FD_CLR(kicked.getFd(), &this->fdList);
+		//eraseClientFromAllChannels(kicked);
+
+		// NOTIFICAR A TODOS OS CLIENTES COM ESTA MENSAGEM
+		eraseClientFromChannel(kicked, channel);
+		buf(client, 1003, channelName + " " + kickedName + ":Got kicked", "KICK");
 	}
-	catch (std::exception &e){
-		buf(client, 2, "", "NICK");
+	catch (int e){
+		buf(client, e, "", "KICK");
 		//buf(client, (int)e.what(), "", "KICK");
 	}
 	return (0);
@@ -157,7 +169,7 @@ int	Server::privmsg( Client &client ){
 		sendMsgToUser(client.args.at(1), client.args.at(2));
 	}
 	catch (std::exception &e){
-		buf(client, 2, "", "NICK");
+		buf(client, 2, "", "PRIVMSG");
 		//buf(client, (int)e.what(), "", "PRIVMSG");
 	}
 	return (0);
@@ -181,17 +193,33 @@ int	Server::topic( Client &client){
 	return (0);
 }
 
+/*
+401
+403
+442
+482
+*/
 int	Server::invite( Client &client){
-	PRINT_COLOR(RED, client.args[0]);
-	PRINT_COLOR(RED, client.args[1]);
-	/*try
+	try
 	{
 		if (client.args.size() < 2)
 			throw (331);
+		std::string invitedClient = client.args[1];
+		Client		invited = getClient(invitedClient);
+		std::string channelName = client.args[2];
+		//Channel		*channel	= getChannel(channelName);
+
+		//checkClientOp(client, channel);
+		if (isClientInChannel(invitedClient, channelName))
+			throw(443);
+		// OTHER CHECKS
+		buf(invited, 1002, channelName, "INVITE " + invitedClient);
+		buf(client, 341, invitedClient + " " + channelName, "INVITE");
+		
 	}
-	catch(const std::exception& e)
+	catch(int e)
 	{
-		std::cerr << e.what() << '\n';
-	}*/
+		buf(client, e, "", "INVITE");
+	}
 	return (0);
 }

@@ -10,7 +10,7 @@ void	Server::checkChannelNameExists( std::string arg )
 	}
 }
 
-int		Server::isChannelNameExist( std::string arg )
+int		Server::doesChannelNameExist( std::string arg )
 {
 	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
@@ -62,8 +62,9 @@ void	checkClientOp( Client &c, Channel *channel )
 {
 	for (std::vector< Client >::iterator itC = channel->operators.begin(); itC != channel->operators.end(); itC++)
 	{
-		Client &client = *itC;
-		if (c.getNick() == client.getNick())
+		Client &operat = *itC;
+		if (c.getNick() == operat.getNick())
 			throw (482); //args 1
 	}
 }
+

@@ -28,6 +28,7 @@
 # define BLUE           "\033[34m"
 # define CYAN           "\033[36m"
 # define PRINT_COLOR(color, text) (std::cout << color << text << RESET << std::endl)
+# define PRINT_ERROR(color, text) (std::cerr << color << text << RESET << std::endl)
 
 # define USERLEN 15 //maximo tamanho para username
 
@@ -35,6 +36,7 @@
 # define ERR_CHANOPRIVSNEEDED	" :You're not a channel operator"
 # define ERR_NOSUCHNICK			" :Nickname is already in use"
 # define ERR_NOSUCHCHANNEL		" :No such channel"
+# define ERR_USERONCHANNEL		" :User alredy on the channel"
 # define ERR_NOTONCHANNEL		" :You're not on that channel"
 # define ERR_NEEDMOREPARAMS 	" :Not enough parameters"
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
@@ -147,7 +149,7 @@ class Server
 	int		invite( Client &);
 
 	void	checkChannelNameExists( std::string );
-	int		isChannelNameExist( std::string arg );
+	int		doesChannelNameExist( std::string arg );
 	int		isClientInChannel( std::string nick, std::string channel );
 	void	checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
