@@ -10,8 +10,7 @@ int	Server::nick( Client &client ){
         client.verifyValidNick();
         if (std::strcmp(client.getNick().c_str(), client.args.at(1).c_str()) == 0)
 		    return (0);
-        //if (checkClientNickExists(client.args.at(1)) == 1)
-		//    throw (433);
+        checkClientNickExists(client.args.at(1));
 
         std::cout << "Changing client's name from " << client.getNick() << " to " << client.args.at(1) <<  std::endl;
 		buf(client, 0, client.args.at(1), "NICK");
