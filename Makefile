@@ -28,6 +28,7 @@ clean:
 
 fclean:			clean
 	$(RM) $(NAME)
+	rm -rf .vscode
 
 re:				fclean $(NAME)
 
