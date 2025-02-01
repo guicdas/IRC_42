@@ -3,53 +3,32 @@
 /// TODO:
 //	So pode correr commandos normais qunado estiver autenticado
 int	Server::join( Client &client ){
-	try
-	{
 		std::string	forbiddenChars[4] = {",\x07 "};
 		std::string channelName = client.args[1];
-		Channel		channel;
 
 	try{
 		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
 			throw(403);//nao e 403
 		if (std::strpbrk(client.args.at(1).c_str(), forbiddenChars->c_str()) != NULL)
 			throw(403);//nao e 403
-		if (ChannelNameExists(client.args.at(1)) == 1)
+		if (doesChannelNameExist(channelName))
 		{
-			if (isClientInChannel(client, getChannel(client.args.at(1))))
-				return (0); // verif se n é erro
-			addUserToChannel(client, getChannel(client.args.at(1)));
-			std::cout << "client " << client.getNick() << " joined " << client.args.at(1) << std::endl;
-			buf(client, 0, client.args.at(1) + "* :realname\n", "JOIN");
+			if (isClientInChannel(client.getNick(), channelName))
+				return (0);
+			addUserToChannel(client, getChannel(channelName));
+			PRINT_COLOR(GREEN, "client " + client.getNick() + " joined " + channelName);
+			buf(client, 1001, client.args[1], "JOIN");
 		}
 		else
 		{
-			if (doesChannelNameExist(channelName))
-			{
-				if (isClientInChannel(client.getNick(), channelName))
-					throw(443);	// NO SPECIFIC ERR_CODE
-				addUserToChannel(client, getChannel(channelName));
-				PRINT_COLOR(GREEN, "client " + client.getNick() + " joined " + channelName);
-				buf(client, 1001, client.args[1], "JOIN");
-			}
-			else
-			{
-				PRINT_COLOR(GREEN, "creating channel " + channelName);
-				Channel ch;
-				ch.name = channelName;
-				addUserToChannel(client, &ch);	// Should be added as operator
-			}
+			PRINT_COLOR(GREEN, "creating channel " + channelName);
+			Channel ch;
+			ch.name = channelName;
+			addUserToChannel(client, &ch);	// Should be added as operator
 		}
-		buf(client, 0, client.args.at(1) + "* :" + client.getRealname() + "\n" , "JOIN");
+		buf(client, 1001, client.args.at(1) + "* :" + client.getRealname() + "\n" , "JOIN");
 	}
-	catch(std::exception &e){
-		buf(client, 403, client.args.at(1), "");//nao e 403
-		//buf(client, 403, client.args.at(1), "");
-	}
-
-	buf(client, 1001, client.args[1], "JOIN");
-	catch(int e)
-	{
+	catch(int e){
 		buf(client, e, "", "JOIN");
 	}
 	return (0);

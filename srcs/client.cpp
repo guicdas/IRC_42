@@ -63,6 +63,13 @@ void	Client::setRealname( std::string name ){
 	this->realname = name;
 }
 
+void	Client::setId( std::string id ){
+	this->id = id;
+}
+
+void	Client::setRegisterd( bool state ){
+	this->registered = state;
+}
 
 void	Client::verifyClientRegistered( void ){
 	if (this->registered == 0)

@@ -100,10 +100,8 @@ class Client
 	void		setId( std::string );
 	void		setRegisterd( bool );
 
-	void 		resolveHostname( int );
 	void 		setHostname(const std::string& hostname);
 	void 		setId( void );
-
 	void		verifyClientRegistered( void );
 	void		verifyValidNick( void );
 	std::string resolveHostname( int );
