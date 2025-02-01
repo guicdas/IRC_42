@@ -59,7 +59,7 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 
 void	Server::addUserToChannel( Client &client, Channel *channel )
 {
-	std::cout << "Adding user " << client.getNick() << " to channel " << channel->name << ENDL;
+	std::cout << "Adding user " << client.getNick() << " to channel " << channel->getName() << ENDL;
 	channel->operators.push_back(client);
 	channel->clients.push_back(client);
 	this->channels.push_back(*channel);
@@ -70,7 +70,7 @@ Channel	*Server::getChannel( std::string channel )
 	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
 		Channel &c = *itCh;
-		if (c.name == channel)
+		if (c.getName() == channel)
 			return (&c);
 	}
 	throw(403);
@@ -93,7 +93,7 @@ void	Server::eraseClientFromAllChannels( Client &client )
 	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
 		Channel &c = *itCh;
-		eraseClientFromChannel(client, getChannel(c.name));
+		eraseClientFromChannel(client, getChannel(c.getName()));
 	}
 }
 
@@ -118,7 +118,7 @@ void	listChannelMembers( Client &c, Channel *ch)
 	for (std::vector< Client >::iterator itC = ch->clients.begin(); itC != ch->clients.end(); itC++)
 	{
 		Client &client = *itC;
-		buf(client, 0, "", ch->name); // verif se e client
+		buf(client, 0, "", ch->getName()); // verif se e client
 		clientWrite(c);
 	}
 }
@@ -145,7 +145,7 @@ void	eraseClientFromChannel( Client &client, Channel *channel )
 
 int	sendMsgToChannel( Channel &channel, std::string client, std::string msg )
 {
-	std::cout << "channel " << channel.name << " receiving \"" << msg << "\"" << std::endl;
+	std::cout << "channel " << channel.getName() << " receiving \"" << msg << "\"" << std::endl;
 	
 	for (std::vector< Client >::iterator itC = channel.clients.begin(); itC != channel.clients.end(); itC++)
 	{

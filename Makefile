@@ -17,6 +17,8 @@ $(NAME):		$(SOURCES_O)
 $(OBJS_DIR):
 	mkdir -p objs
 	mkdir -p objs/commands
+	mkdir -p objs/server
+	mkdir -p objs/classes
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp | $(OBJS_DIR)
 	$(CXX) $(CXXFLAGS) -c $^ -o $@

@@ -16,6 +16,8 @@
 #include <vector>
 #include <map>
 
+#include "channel.hpp"
+#include "client.hpp"
 
 # define ENDL				"." << std::endl
 # define buf(c,err,str,cmd)	(putInBuf(c,err,str,cmd))
@@ -43,61 +45,8 @@
 # define ERR_PASSWDMISMATCH		" :Password incorrect"
 # define ERR_USERSDONTMATCH		" :Cant change mode for other users"
 
+class Channel;
 class Client;
-
-class Channel
-{
-
-	public:
-		std::vector< Client > operators;
-		std::vector< Client > clients;
-		std::string				name;
-		//may not contain any spaces, a control G / BELL ('^G', 0x07), or a comma
-		std::string				topic;
-		/*he topic is a line shown to all users when they join the channel, and all users in the channel are notified when the topic of a channel is changed
-		channel ceases to exist when the last client leaves it.*/
-
-
-};
-
-class Client
-{
-	private:
-		int							fd;
-		std::string					nickname;
-		std::string					realname;
-		std::string					username;
-		std::string					id;
-		bool						registered;
-
-	public:
-		std::string					buffer;
-		std::vector< Channel >		channels;
-		std::vector< std::string >	args;
-
-		Client( int	clientSocket );
-		Client( Client const &c );
-		Client	&operator=( Client const &c );
-		~Client( void );
-
-	std::string	getNick( void );
-	std::string	getUser( void );
-	std::string	getRealname( void );
-	int			getFd( void );
-	std::string getId( void );
-	bool		getRegisterd( void );
-
-	void		setNick( std::string );
-	void		setUser( std::string );
-	void		setRealname( std::string );
-	void		setId( std::string );
-	void		setRegisterd( bool );
-
-	void		verifyClientRegistered( void );
-	void		verifyValidNick( void );
-	std::string resolveHostname( int );
-	std::string	createId( void );
-};
 
 class Server
 {

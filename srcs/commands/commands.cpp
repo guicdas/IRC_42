@@ -7,7 +7,6 @@ int	Server::join( Client &client ){
 	{
 		std::string	forbiddenChars[4] = {",\x07 "};
 		std::string channelName = client.args[1];
-		Channel		channel;
 
 		if (channelName[0] != '#' && channelName[0] != '&')
 			buf(client, 403, client.args.at(1), "");
@@ -26,8 +25,7 @@ int	Server::join( Client &client ){
 			else
 			{
 				PRINT_COLOR(GREEN, "creating channel " + channelName);
-				Channel ch;
-				ch.name = channelName;
+				Channel ch(channelName);
 				addUserToChannel(client, &ch);	// Should be added as operator
 			}
 
@@ -52,7 +50,7 @@ int	Server::list( Client &client ){
 	for (std::vector< Channel >::iterator it = this->channels.begin(); it != this->channels.end(); it++)
 	{
 		Channel &ch = *it;
-		client.buffer = ch.name + "\t\t" + ch.topic + ".\n";
+		client.buffer = ch.getName() + "\t\t" + ch.getTopic() + ".\n";
 		clientWrite(client);
 	}
 	return (0);
@@ -73,10 +71,10 @@ int	Server::part( Client &client )
 			for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 			{
 				Channel &channel = *itCh;
-				if (channelName == channel.name)
+				if (channelName == channel.getName())
 				{
 					client.channels.erase(itCh);
-					eraseClientFromChannel(client, getChannel(channel.name));
+					eraseClientFromChannel(client, getChannel(channel.getName()));
 					buf(client, 0, ": Leaving", "PART");
 				}
 			}
@@ -158,7 +156,7 @@ int	Server::privmsg( Client &client ){
 		for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 		{
 			Channel &channel = *itCh;
-			if (client.args.at(1) == channel.name)
+			if (client.args.at(1) == channel.getName())
 			{
 				sendMsgToChannel(channel, client.args.at(1), client.args.at(2));
 				return (0); // verif return

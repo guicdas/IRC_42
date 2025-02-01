@@ -31,7 +31,7 @@ Client::Client(const Client &c)
 
 
 Client	&Client::operator=( Client const &c ){
-	if (this == &c)
+	if (this != &c)
 		return (*this);
 	return (*this);
 }
