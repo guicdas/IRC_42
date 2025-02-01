@@ -36,7 +36,7 @@
 
 # define ERR_USERNOTINCHANNEL	" :They aren't on that channel"
 # define ERR_CHANOPRIVSNEEDED	" :You're not a channel operator"
-# define ERR_NOSUCHNICK			" :Nickname is already in use"
+# define ERR_NOSUCHNICK			" :No such nick/channel"
 # define ERR_NOSUCHCHANNEL		" :No such channel"
 # define ERR_USERONCHANNEL		" :User alredy on the channel"
 # define ERR_NOTONCHANNEL		" :You're not on that channel"
@@ -44,6 +44,12 @@
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
 # define ERR_PASSWDMISMATCH		" :Password incorrect"
 # define ERR_USERSDONTMATCH		" :Cant change mode for other users"
+# define ERR_NICKNAMEINUSE		" :Nickname is already in use"
+# define ERR_ERRONEUSNICKNAME	" :Erroneous nickname"
+# define ERR_NONICKNAMEGIVEN	" :No nickname given"
+# define ERR_NORECIPIENT		" :No recipient given (command)"
+# define ERR_NOTEXTTOSEND		" :No text to send"
+# define ERR_NICKNAMEINUSE		" :Nickname is already in use"
 
 class Channel;
 class Client;
@@ -77,9 +83,8 @@ class Server
 	void	loop( void );
 	void	acceptClient( void );
 	void	iterateClients( void );
-
-	int			clientRead( Client & );
-	int			parseCommand( Client &client, std::string s );
+	int		clientRead( Client & );
+	int		parseCommand( Client &, std::string s );
 
 	int		list( Client & );
 	int		join( Client & );
@@ -93,31 +98,19 @@ class Server
 	int		cap( Client & );
 	int		who( Client & );
 	int		privmsg( Client & );
+	int		topic( Client & );
+	int		invite( Client & );
 
-	int		topic( Client &);
-	int		invite( Client &);
-
-	void	checkChannelNameExists( std::string );
-	int		doesChannelNameExist( std::string arg );
-	int		isClientInChannel( std::string nick, std::string channel );
-	void	checkClientNickExists( std::string );
-	int		sendMsgToUser( std::string, std::string );
 	void	eraseClientFromAllChannels( Client & );
+	int		doesChannelNameExist( std::string );
 
-	Channel	*getChannel( std::string );
+	Channel	&getChannel( std::string );
 	Client	&getClient( std::string );
-	void		addUserToChannel( Client &, Channel * );
 };
 
 void	clientWrite( Client & );
 void	putInBuf( Client &, int, std::string , std::string );
-
-	void	listChannelMembers( Client &, Channel * );
-	int		sendMsgToChannel( Channel &, std::string, std::string );
-	void	eraseClientFromChannel( Client &, Channel * );
-
-	void	checkClientInChannel( Client &, Channel * );
-	void	checkClientOp( Client &, Channel * );
+void	checkClientOp( Client &, Channel * );
 
 class FileException : public std::exception{
 	private:

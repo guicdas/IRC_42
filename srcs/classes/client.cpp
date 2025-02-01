@@ -114,5 +114,5 @@ std::string Client::resolveHostname( int socketFd ){
 
 std::string	Client::createId( void ){
 	std::string _id = nickname + "!" + username + "@" + this->resolveHostname(this->getFd());
-	return _id;
+	return (_id);
 }

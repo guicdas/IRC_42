@@ -12,20 +12,18 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 			c.buffer += "341 " + c.getNick() + " " + extra;							break;
 		case 401:
 			c.buffer += "401 " + c.getNick() + ERR_NOSUCHNICK;						break;
-		case 403:
-			c.buffer += "403 " + c.getNick() + ERR_NOSUCHCHANNEL;					break;
 		case 404:
-			c.buffer += "404 " + c.getNick() + " :Cannot send to nick/channel";		break;
+			c.buffer += "404 " + c.getNick() + ERR_NOSUCHNICK;						break;
 		case 411:
-			c.buffer += "411 " + c.getNick() + " :No recipient given (PRIVMSG)";	break;
+			c.buffer += "411 " + c.getNick() + ERR_NORECIPIENT;						break;
 		case 412:
-			c.buffer += "412 " + c.getNick() + " :No text to send";					break;
+			c.buffer += "412 " + c.getNick() + ERR_NOTEXTTOSEND;					break;
 		case 431:
-			c.buffer += "431 " + c.getNick() + " :No nickname given";				break;
+			c.buffer += "431 " + c.getNick() + ERR_NONICKNAMEGIVEN;					break;
 		case 432:
-			c.buffer += "432 " + c.getNick() + " :Erroneous nickname";				break;
+			c.buffer += "432 " + c.getNick() + ERR_ERRONEUSNICKNAME;				break;
 		case 433:
-			c.buffer += "433 " + c.getNick() + " :Nickname is already in use";		break; //client.args.at(1)
+			c.buffer += "433 " + c.getNick() + ERR_NICKNAMEINUSE;					break; //
 		case 441:
 			c.buffer += "442 " + c.getNick() + ERR_USERNOTINCHANNEL;				break;
 		case 442:
@@ -33,7 +31,7 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 		case 443:
 			c.buffer += "443 " + c.getNick() + ERR_USERONCHANNEL; 					break;
 		case 461:
-			c.buffer += "461 " + c.getNick() + " " + command + ERR_NEEDMOREPARAMS;	break;
+			c.buffer += "461 " + c.getNick() + ERR_NEEDMOREPARAMS;					break;
 		case 462:
 			c.buffer += "462 " + c.getNick() + ERR_ALREADYREGISTERED;				break;
 		case 464:
@@ -41,11 +39,13 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 		case 482:
 			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;				break;
 		case 1001:
-			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 					break;
+			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 				break;
 		case 1002:
-			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 					break;
+			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 				break;
 		case 1003:
-			c.buffer = ":" + c.getId() + " " + command + " " + extra; 					break;
+			c.buffer = ":" + c.getId() + " " + command + " " + extra; 				break;
+		case 1004:
+			c.buffer = "Wrong characters in channel name!" ; 						break;
 
 		default:
 			if (c.getNick().size() < 1)
@@ -57,23 +57,15 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 	c.buffer += "\n";
 }
 
-void	Server::addUserToChannel( Client &client, Channel *channel )
-{
-	std::cout << "Adding user " << client.getNick() << " to channel " << channel->getName() << ENDL;
-	channel->operators.push_back(client);
-	channel->clients.push_back(client);
-	this->channels.push_back(*channel);
-}
-
-Channel	*Server::getChannel( std::string channel )
+Channel	&Server::getChannel( std::string channel )
 {
 	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
 		Channel &c = *itCh;
 		if (c.getName() == channel)
-			return (&c);
+			return (c);
 	}
-	throw(403);
+	throw (403);
 }
 
 Client	&Server::getClient( std::string nick )
@@ -84,7 +76,7 @@ Client	&Server::getClient( std::string nick )
 		if (c.getNick() == nick)
 			return (c);
 	}
-	throw(401);
+	throw (401);
 }
 
 
@@ -93,68 +85,18 @@ void	Server::eraseClientFromAllChannels( Client &client )
 	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
 		Channel &c = *itCh;
-		eraseClientFromChannel(client, getChannel(c.getName()));
+		c.eraseClientFromChannel(client);
 	}
 }
 
-int	Server::sendMsgToUser( std::string clientName, std::string msg )
+int		Server::doesChannelNameExist( std::string arg )
 {
-	std::cout << "client " << clientName << " receiving \"" << msg << "\"" << std::endl;
-	
-	for (std::vector< Client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
+	for (std::vector< Channel >::iterator itCh = this->channels.begin(); itCh != this->channels.end(); itCh++)
 	{
-		Client &c = *itC;
-		if (c.getNick() == clientName)
-		{
-			c.buffer = clientName + " :" + msg + "\n";
-			clientWrite(c);
-		}
+		Channel &channel = *itCh;
+		if (channel.getName() == arg)
+			return (1);
 	}
 	return (0);
 }
 
-void	listChannelMembers( Client &c, Channel *ch)
-{
-	for (std::vector< Client >::iterator itC = ch->clients.begin(); itC != ch->clients.end(); itC++)
-	{
-		Client &client = *itC;
-		buf(client, 0, "", ch->getName()); // verif se e client
-		clientWrite(c);
-	}
-}
-
-
-void	eraseClientFromChannel( Client &client, Channel *channel )
-{
-	for (std::vector< Client >::iterator itC = channel->clients.begin(); itC != channel->clients.end(); itC++)
-	{
-		Client &c = *itC;
-		if (c.getNick() == client.getNick())
-		{
-			/*if (operator)
-				channel.operators*/
-			channel->clients.erase(itC);
-		}
-		else
-		{
-			buf(c, 0, c.getNick() + " :Leaving", "PART");
-			clientWrite(c);
-		}
-	}
-}
-
-int	sendMsgToChannel( Channel &channel, std::string client, std::string msg )
-{
-	std::cout << "channel " << channel.getName() << " receiving \"" << msg << "\"" << std::endl;
-	
-	for (std::vector< Client >::iterator itC = channel.clients.begin(); itC != channel.clients.end(); itC++)
-	{
-		Client &c = *itC;
-		if (c.getNick() != client)
-		{
-			buf(c, 0, c.getNick() + " :" + msg + ".\n", "PRIVMSG");
-			clientWrite(c);
-		}
-	}
-	return (0);
-}

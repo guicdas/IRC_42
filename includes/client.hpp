@@ -41,4 +41,5 @@ class Client
 	void		verifyValidNick( void );
 	std::string resolveHostname( int );
 	std::string	createId( void );
+
 };
