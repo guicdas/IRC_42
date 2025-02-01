@@ -1,7 +1,13 @@
 #include "../includes/irc.hpp"
 
+/// TODO:
+//	So pode correr commandos normais qunado estiver autenticado
 int	Server::join( Client &client ){
-	std::string	forbiddenChars[4] = {",\x07 "};
+	try
+	{
+		std::string	forbiddenChars[4] = {",\x07 "};
+		std::string channelName = client.args[1];
+		Channel		channel;
 
 	try{
 		if (client.args.at(1)[0] != '#' && client.args.at(1)[0] != '&')
@@ -18,12 +24,22 @@ int	Server::join( Client &client ){
 		}
 		else
 		{
-			std::cout << "creating channel " << client.args.at(1) << ENDL;
-			Channel ch;
-			ch.name = client.args.at(1);
-			addUserToChannel(client, &ch);
+			if (doesChannelNameExist(channelName))
+			{
+				if (isClientInChannel(client.getNick(), channelName))
+					throw(443);	// NO SPECIFIC ERR_CODE
+				addUserToChannel(client, getChannel(channelName));
+				PRINT_COLOR(GREEN, "client " + client.getNick() + " joined " + channelName);
+				buf(client, 1001, client.args[1], "JOIN");
+			}
+			else
+			{
+				PRINT_COLOR(GREEN, "creating channel " + channelName);
+				Channel ch;
+				ch.name = channelName;
+				addUserToChannel(client, &ch);	// Should be added as operator
+			}
 		}
-
 		buf(client, 0, client.args.at(1) + "* :" + client.getRealname() + "\n" , "JOIN");
 	}
 	catch(std::exception &e){
@@ -31,6 +47,11 @@ int	Server::join( Client &client ){
 		//buf(client, 403, client.args.at(1), "");
 	}
 
+	buf(client, 1001, client.args[1], "JOIN");
+	catch(int e)
+	{
+		buf(client, e, "", "JOIN");
+	}
 	return (0);
 }
 
@@ -48,24 +69,31 @@ int	Server::list( Client &client ){
 
 int	Server::part( Client &client )
 {
-	std::istringstream	channels(client.args.at(1));
-	std::string	channelName;
-
-	while (std::getline(channels, channelName, ','))
+	try
 	{
-		checkChannelNameExists(channelName);
-		checkClientInChannel(client, getChannel(channelName)); // 441
+		std::istringstream	channels(client.args.at(1));
+		std::string	channelName;
 
-		for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
+		while (std::getline(channels, channelName, ','))
 		{
-			Channel &channel = *itCh;
-			if (channelName == channel.name)
+			checkChannelNameExists(channelName);
+			checkClientInChannel(client, getChannel(channelName)); // 441
+
+			for (std::vector< Channel >::iterator itCh = client.channels.begin(); itCh != client.channels.end(); itCh++)
 			{
-				client.channels.erase(itCh);
-				eraseClientFromChannel(client, getChannel(channel.name));
-				buf(client, 0, ": Leaving", "PART");
+				Channel &channel = *itCh;
+				if (channelName == channel.name)
+				{
+					client.channels.erase(itCh);
+					eraseClientFromChannel(client, getChannel(channel.name));
+					buf(client, 0, ": Leaving", "PART");
+				}
 			}
 		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
 	}
 	return (0);
 }
@@ -97,20 +125,31 @@ int	Server::who( Client &client ){
 	return (0);
 }
 
+
 int	Server::kick( Client &client ){
 	try{
-		checkChannelNameExists(client.args.at(1));
-		checkClientNickExists(client.args.at(2));
-		checkClientOp(client, getChannel(client.args.at(1)));
-		checkClientInChannel(getClient(client.args.at(2)), getChannel(client.args.at(1)));
+		if (client.args.size() < 2)
+			throw (411);
+		std::string kickedName	= client.args[2];
+		Client		kicked		= getClient(kickedName);
+		std::string channelName = client.args[1];
+		Channel		*channel 	= getChannel(channelName);
+
+		//checkClientOp(client, channel);
+		checkClientInChannel(kicked, channel);
 		
-		Client &c = getClient(client.args.at(2));
-		close(c.getFd());
-		FD_CLR(c.getFd(), &this->fdList);
-		eraseClientFromAllChannels(c);
+		// O CLIENTE É KICKED DO CANAL NAO DO SERVIDOR
+
+		//close(kicked.getFd());
+		//FD_CLR(kicked.getFd(), &this->fdList);
+		//eraseClientFromAllChannels(kicked);
+
+		// NOTIFICAR A TODOS OS CLIENTES COM ESTA MENSAGEM
+		eraseClientFromChannel(kicked, channel);
+		buf(client, 1003, channelName + " " + kickedName + ":Got kicked", "KICK");
 	}
-	catch (std::exception &e){
-		buf(client, 2, "", "NICK");
+	catch (int e){
+		buf(client, e, "", "KICK");
 		//buf(client, (int)e.what(), "", "KICK");
 	}
 	return (0);
@@ -139,8 +178,57 @@ int	Server::privmsg( Client &client ){
 		sendMsgToUser(client.args.at(1), client.args.at(2));
 	}
 	catch (std::exception &e){
-		buf(client, 2, "", "NICK");
+		buf(client, 2, "", "PRIVMSG");
 		//buf(client, (int)e.what(), "", "PRIVMSG");
+	}
+	return (0);
+}
+
+
+int	Server::topic( Client &client){
+	if (client.args[0] != "")
+		PRINT_COLOR(RED, client.args[0]);
+	if (client.args[1] != "")
+		PRINT_COLOR(RED, client.args[1]);
+	/*try
+	{
+		if (client.args.size() < 2)
+			throw (331);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}*/
+	return (0);
+}
+
+/*
+401
+403
+442
+482
+*/
+int	Server::invite( Client &client){
+	try
+	{
+		if (client.args.size() < 2)
+			throw (331);
+		std::string invitedClient = client.args[1];
+		Client		invited = getClient(invitedClient);
+		std::string channelName = client.args[2];
+		//Channel		*channel	= getChannel(channelName);
+
+		//checkClientOp(client, channel);
+		if (isClientInChannel(invitedClient, channelName))
+			throw(443);
+		// OTHER CHECKS
+		buf(invited, 1002, channelName, "INVITE " + invitedClient);
+		buf(client, 341, invitedClient + " " + channelName, "INVITE");
+		
+	}
+	catch(int e)
+	{
+		buf(client, e, "", "INVITE");
 	}
 	return (0);
 }

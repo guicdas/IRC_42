@@ -1,10 +1,13 @@
 #include "../includes/irc.hpp"
 
+
+/// TODO:
+// **1 Ao entrar no servidor recebe logo esta mensagem: ">> ircserv 462  :You may not reregiste"
 int	Server::nick( Client &client ){
 	std::string	forbiddenChars[11] = {",*.?!@\"$# "};
 
 	try {
-		client.verifyClientRegistered();
+		//client.verifyClientRegistered();	**1
         if (client.args.size() < 2)
 	        throw (431);
         client.verifyValidNick();
@@ -14,10 +17,11 @@ int	Server::nick( Client &client ){
 
         std::cout << "Changing client's name from " << client.getNick() << " to " << client.args.at(1) <<  std::endl;
 		buf(client, 0, client.args.at(1), "NICK");
-		client.getNick() = client.args.at(1);
+		client.setNick(client.args[1]);
     }
-	catch (std::exception &e){
-		buf(client, 2, "", "NICK");
+	catch (int e)
+	{
+		buf(client, e, "", "NICK");
 		//buf(client, (int)e.what(), "", "NICK");
 	}
 	return (0);
@@ -46,16 +50,22 @@ int	Server::user( Client &client )
 	return 0;
 }
 
+/// TODO:
+//  /pass sem parametros dispara erro
+//  antes de por a pass devia dar display de prompt para por a pass
+//  apos inserir passe convem informar ao cliente que fez login successful
 int	Server::pass( Client &client )
 {
 	try {
 		if (client.args.at(1) != this->password)
 			throw (464);
 		//verifyClientNotRegistered(client);
-		//client.registered++;
+		client.setRegisterd(true);
+		client.setId(client.createId());
+
 	}
-	catch (std::exception &e){
-		buf(client, 3, "", "NICK");
+	catch (int e){
+		buf(client, e, "", "NICK");
 		//buf(client, (int)e.what(), "", "PASS");
 	}
 	return (0);

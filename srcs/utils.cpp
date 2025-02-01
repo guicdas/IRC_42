@@ -6,6 +6,10 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 	switch (code){
 		case 324:
 			c.buffer += "324 " + c.getNick() + " " + extra;							break;
+		case 331:
+			c.buffer += "331 " + c.getNick() + " " + extra;							break;
+		case 341:
+			c.buffer += "341 " + c.getNick() + " " + extra;							break;
 		case 401:
 			c.buffer += "401 " + c.getNick() + ERR_NOSUCHNICK;						break;
 		case 403:
@@ -26,6 +30,8 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 			c.buffer += "442 " + c.getNick() + ERR_USERNOTINCHANNEL;				break;
 		case 442:
 			c.buffer += "441 " + c.getNick() + ERR_NOTONCHANNEL; 					break;
+		case 443:
+			c.buffer += "443 " + c.getNick() + ERR_USERONCHANNEL; 					break;
 		case 461:
 			c.buffer += "461 " + c.getNick() + ERR_NEEDMOREPARAMS;					break;
 		case 462:
@@ -34,6 +40,13 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 			c.buffer += "464 " + c.getNick() + ERR_PASSWDMISMATCH;					break;
 		case 482:
 			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;				break;
+		case 1001:
+			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 					break;
+		case 1002:
+			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 					break;
+		case 1003:
+			c.buffer = ":" + c.getId() + " " + command + " " + extra; 					break;
+
 		default:
 			if (c.getNick().size() < 1)
 				c.buffer += command + " setting nick to: " + extra;
@@ -60,18 +73,18 @@ Channel	*Server::getChannel( std::string channel )
 		if (c.name == channel)
 			return (&c);
 	}
-	return (NULL);
+	throw(403);
 }
 
-Client	&Server::getClient( std::string client )
+Client	&Server::getClient( std::string nick )
 {
 	for (std::vector< Client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
 	{
 		Client &c = *itC;
-		if (c.getNick() == client)
+		if (c.getNick() == nick)
 			return (c);
 	}
-	throw (FileException("Client not found"));
+	throw(401);
 }
 
 

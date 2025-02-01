@@ -20,12 +20,23 @@
 # define ENDL				"." << std::endl
 # define buf(c,err,str,cmd)	(putInBuf(c,err,str,cmd))
 
+# define RESET          "\033[0m"
+# define RED            "\033[31m"
+# define GREEN          "\033[32m"
+# define MAGENTA        "\033[35m"
+# define YELLOW         "\033[33m"
+# define BLUE           "\033[34m"
+# define CYAN           "\033[36m"
+# define PRINT_COLOR(color, text) (std::cout << color << text << RESET << std::endl)
+# define PRINT_ERROR(color, text) (std::cerr << color << text << RESET << std::endl)
+
 # define USERLEN 15 //maximo tamanho para username
 
 # define ERR_USERNOTINCHANNEL	" :They aren't on that channel"
 # define ERR_CHANOPRIVSNEEDED	" :You're not a channel operator"
 # define ERR_NOSUCHNICK			" :Nickname is already in use"
 # define ERR_NOSUCHCHANNEL		" :No such channel"
+# define ERR_USERONCHANNEL		" :User alredy on the channel"
 # define ERR_NOTONCHANNEL		" :You're not on that channel"
 # define ERR_NEEDMOREPARAMS 	" :Not enough parameters"
 # define ERR_ALREADYREGISTERED 	" :You may not reregister"
@@ -67,9 +78,9 @@ class Client
 		std::string		id;
 	
 	public:
+		std::string					buffer;
 		std::vector< Channel >		channels;
 		std::vector< std::string >	args;
-		std::string					buffer;
 
 		Client( int	clientSocket );
 		Client( Client const &c );
@@ -77,10 +88,17 @@ class Client
 		~Client( void );
 
 	std::string	getNick( void );
+	std::string	getUser( void );
 	std::string	getRealname( void );
 	int			getFd( void );
+	std::string getId( void );
+	bool		getRegisterd( void );
+
+	void		setNick( std::string );
 	void		setUser( std::string );
 	void		setRealname( std::string );
+	void		setId( std::string );
+	void		setRegisterd( bool );
 
 	void 		resolveHostname( int );
 	void 		setHostname(const std::string& hostname);
@@ -88,23 +106,26 @@ class Client
 
 	void		verifyClientRegistered( void );
 	void		verifyValidNick( void );
+	std::string resolveHostname( int );
+	std::string	createId( void );
 };
 
 class Server
 {
 	private:
 		std::map< std::string, int(Server::*)( Client & )>	commands;
-		std::vector< Channel >	channels;
-		std::vector< Client >		clients;
-		struct sockaddr_in			serverAddr;
 		std::string					password;
 		unsigned int				port;
+		struct sockaddr_in			serverAddr;
 		int							serverSocket;
 		fd_set						fdList;
 		fd_set						fdWrite;
 		fd_set						fdRead;
 		fd_set						fdExcep;
 		int							maxFds;
+
+		std::vector< Client >		clients;
+		std::vector< Channel >		channels;
 
 	public:
 		Server( void );
@@ -135,7 +156,12 @@ class Server
 	int		who( Client & );
 	int		privmsg( Client & );
 
+	int		topic( Client &);
+	int		invite( Client &);
+
 	void	checkChannelNameExists( std::string );
+	int		doesChannelNameExist( std::string arg );
+	int		isClientInChannel( std::string nick, std::string channel );
 	void	checkClientNickExists( std::string );
 	int		sendMsgToUser( std::string, std::string );
 	void	eraseClientFromAllChannels( Client & );
