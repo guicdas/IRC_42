@@ -8,8 +8,10 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 			c.buffer += "324 " + c.getNick() + " " + extra;							break;
 		case 331:
 			c.buffer += "331 " + c.getNick() + " " + extra;							break;
+		case 336:
+			c.buffer += "336 " + c.getNick() + RPL_INVITELIST;						break;
 		case 341:
-			c.buffer += "341 " + c.getNick() + " " + extra;							break;
+			c.buffer += "341 " + c.getNick() + " " + extra + " " + command;			break;
 		case 401:
 			c.buffer += "401 " + c.getNick() + ERR_NOSUCHNICK;						break;
 		case 404:
@@ -38,9 +40,9 @@ void	putInBuf( Client &c, int code, std::string extra , std::string command )
 			c.buffer += "464 " + c.getNick() + ERR_PASSWDMISMATCH;					break;
 		case 482:
 			c.buffer += "482 " + c.getNick() + ERR_CHANOPRIVSNEEDED;				break;
+		case 501:
+			c.buffer += "501 " + c.getNick() + ERR_USERSDONTMATCH;					break;
 		case 1001:
-			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 				break;
-		case 1002:
 			c.buffer = ":" + c.getId() + " " + command + " :" + extra; 				break;
 		case 1003:
 			c.buffer = ":" + c.getId() + " " + command + " " + extra; 				break;

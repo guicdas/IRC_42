@@ -10,9 +10,9 @@ void	Channel::checkClientInChannel( Client &client )
 	}
 }
 
-void	checkClientOp( Client &c, Channel *channel )
+void	checkClientOp( Client &c, Channel &channel )
 {
-	for (std::vector< Client >::iterator itC = channel->operators.begin(); itC != channel->operators.end(); itC++)
+	for (std::vector< Client >::iterator itC = channel.operators.begin(); itC != channel.operators.end(); itC++)
 	{
 		Client &operat = *itC;
 		if (c.getNick() == operat.getNick())

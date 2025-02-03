@@ -32,6 +32,10 @@ std::string	Channel::getName( void ){
 	return (this->name);
 }
 
+bool	Channel::isInviteOnly(Channel &c){
+	return (c.InviteMode);
+}
+
 void Channel::setTopic( std::string str ){
 	this->topic = str;
 }
@@ -44,8 +48,7 @@ void	Channel::eraseClientFromChannel( Client &client )
 {
 	for (std::vector< Client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
 	{
-		Client &c = *itC;
-		if (c.getNick() == client.getNick())
+		if ((*itC).getNick() == client.getNick())
 		{
 			/*if (operator)
 				channel.operators*/
@@ -53,8 +56,8 @@ void	Channel::eraseClientFromChannel( Client &client )
 		}
 		else
 		{
-			buf(c, 0, c.getNick() + " :Leaving", "PART");
-			clientWrite(c);
+			buf(*itC, 0, (*itC).getNick() + " :Leaving", "PART");
+			clientWrite(*itC);
 		}
 	}
 }
@@ -65,11 +68,10 @@ int	Channel::sendMsgToChannel( std::string client, std::string msg )
 	
 	for (std::vector< Client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
 	{
-		Client &c = *itC;
-		if (c.getNick() != client)
+		if ((*itC).getNick() != client)
 		{
-			buf(c, 0, c.getNick() + " :" + msg + ".\n", "PRIVMSG");
-			clientWrite(c);
+			buf(*itC, 0, (*itC).getNick() + " :" + msg + ".\n", "PRIVMSG");
+			clientWrite(*itC);
 		}
 	}
 	return (0);
@@ -77,22 +79,15 @@ int	Channel::sendMsgToChannel( std::string client, std::string msg )
 
 int		Channel::isClientInChannel( std::string nick )
 {
-	for (std::vector<Client>::iterator itClient = this->clients.begin(); itClient != this->clients.end(); ++itClient)
-	{
-		if (itClient->getNick() == nick) //possivel erro
-			return (1);
-	}
+	if (this->findNick(nick, this->clients) != this->clients.end())
+		return (1);
 	return (0);
 }
 
-int		Channel::isOperatorInChannel( Client &c )
+int		Channel::isOperatorInChannel( std::string nick )
 {
-	for (std::vector<Client>::iterator itClient = this->operators.begin(); itClient != this->operators.end(); ++itClient)
-	{
-		Client &Client = *itClient;
-		if (c.getNick() == Client.getNick())
-			return (1);
-	}
+	if (this->findNick(nick, this->operators) != this->operators.end())
+		return (1);
 	return (0);
 }
 
@@ -108,12 +103,20 @@ void	Channel::addOperatorToChannel( Client &client )
 	this->operators.push_back(client);
 }
 
-void	Channel::listAllMembersInChannel( Client &c )
+void	Channel::listAllMembersInChannel( Client &client )
 {
 	for (std::vector< Client >::iterator itC = this->clients.begin(); itC != this->clients.end(); itC++)
 	{
-		Client &client = *itC;
-		buf(c, 0, "", client.getNick());// e preciso limpar a cada vez? 
-		clientWrite(c);
+		buf(client, 0, "", (*itC).getNick());
+		clientWrite(client);
 	}
+}
+
+std::vector< Client >::iterator	Channel::findNick( std::string nick, std::vector< Client > itVec)
+{
+	std::vector< Client >::iterator itClient = itVec.begin();
+
+	while (itClient != itVec.end() && (*itClient).getNick() != nick)
+		itClient++;
+	return (itClient);
 }

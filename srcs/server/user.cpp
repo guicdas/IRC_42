@@ -21,7 +21,7 @@ int	Server::parseCommand( Client &client, std::string s )
 	if (itMap != this->commands.end())
 		ret = (this->*itMap->second)(client);
 	else
-		Server::privmsg(client);
+		Server::privmsg(client);//unkown command
 	
 	client.args.clear();
 	return (ret);
@@ -34,7 +34,7 @@ int	Server::clientRead( Client &c )
 	int			bytesRecv;
 	size_t		found;
 
-	bytesRecv = recv(c.getFd(), &buffer, BUF_SIZE, 0);
+	bytesRecv = recv(c.getFd(), &buffer, BUF_SIZE, 0);//todo
 	if (bytesRecv < 1)
 	{
 		if (bytesRecv < 0)

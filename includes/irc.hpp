@@ -50,6 +50,7 @@
 # define ERR_NORECIPIENT		" :No recipient given (command)"
 # define ERR_NOTEXTTOSEND		" :No text to send"
 # define ERR_NICKNAMEINUSE		" :Nickname is already in use"
+# define RPL_INVITELIST			" <client> <channel>"
 
 class Channel;
 class Client;
@@ -110,7 +111,7 @@ class Server
 
 void	clientWrite( Client & );
 void	putInBuf( Client &, int, std::string , std::string );
-void	checkClientOp( Client &, Channel * );
+void	checkClientOp( Client &, Channel & );
 
 class FileException : public std::exception{
 	private:

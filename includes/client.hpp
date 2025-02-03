@@ -30,7 +30,6 @@ class Client
 	int			getFd( void );
 	std::string getId( void );
 	bool		getRegisterd( void );
-
 	void		setNick( std::string );
 	void		setUser( std::string );
 	void		setRealname( std::string );

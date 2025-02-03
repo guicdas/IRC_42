@@ -9,6 +9,7 @@ class Channel
 	private:
 		std::string	name;
 		std::string	topic;
+		bool 		InviteMode;
 
 	public:
 		std::vector< Client > operators;
@@ -31,7 +32,11 @@ class Channel
 	void	listAllMembersInChannel( Client & );
 
 	int		isClientInChannel( std::string );
-	int		isOperatorInChannel( Client & );
-
+	int		isOperatorInChannel( std::string );
+	bool	isInviteOnly( Channel & );
+	// throws
 	void	checkClientInChannel( Client & );
+
+	// helper
+	std::vector< Client >::iterator	findNick( std::string, std::vector< Client > );
 };

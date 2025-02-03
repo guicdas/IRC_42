@@ -56,9 +56,9 @@ void	Server::createCommandMap( void ){
 	this->commands["CAP"] = &Server::cap;
 	this->commands["WHO"] = &Server::who;
 	this->commands["PASS"] = &Server::pass;
-
 	this->commands["TOPIC"] = &Server::topic;
 	this->commands["INVITE"] = &Server::invite;
+	this->commands["KICK"] = &Server::kick;
 }
 
 void	Server::createServerSocket( void ){
@@ -104,7 +104,6 @@ void Server::iterateClients(void) {
     }
 }
 
-
 void	Server::loop( void ){
 	this->maxFds = this->serverSocket;
 	int	nFds;
@@ -124,3 +123,4 @@ void	Server::loop( void ){
 			iterateClients();
 	}
 }
+

@@ -42,6 +42,9 @@ int	Server::list( Client &client ){
 	for (std::vector< Channel >::iterator it = this->channels.begin(); it != this->channels.end(); it++)
 	{
 		Channel &ch = *it;
+		if (ch.findNick(client.getNick(), this->clients) != ch.clients.end())//apenas um teste
+			PRINT_COLOR(MAGENTA, "Client " + client.getNick() + " Found");
+		
 		PRINT_COLOR(MAGENTA, ch.getName() + "\tTopic:" + ch.getTopic() + ".");
 		client.buffer = ch.getName() + "\tTopic:" + ch.getTopic() + ".\n";
 		clientWrite(client);
@@ -112,14 +115,15 @@ int	Server::who( Client &client ){
 	return (0);
 }
 
-
 int	Server::kick( Client &client ){
-	try{
+	try
+	{
 		if (client.args.size() < 2)
 			throw (411);
 		std::string kickedName	= client.args[2];
-		Client		&kicked		= getClient(kickedName);
 		std::string channelName = client.args[1];
+
+		Client		&kicked		= getClient(kickedName);
 		Channel		&channel 	= getChannel(channelName);
 
 		//checkClientOp(client, channel);
@@ -135,13 +139,11 @@ int	Server::kick( Client &client ){
 		//channel.eraseClientFromChannel(kicked);
 		buf(client, 1003, channelName + " " + kickedName + ":Got kicked", "KICK");
 	}
-	catch (int e){
+	catch(int e){
 		buf(client, e, "", "KICK");
-		//buf(client, (int)e.what(), "", "KICK");
 	}
 	return (0);
 }
-
 
 int	Server::privmsg( Client &client ){
 	try{
@@ -201,28 +203,3 @@ int	Server::topic( Client &client){
 442
 482
 */
-int	Server::invite( Client &client){
-	try
-	{
-		if (client.args.size() < 2)
-			throw (331);
-		std::string invitedClient = client.args[1];
-		Client		invited = getClient(invitedClient);
-		std::string channelName = client.args[2];
-		//Channel		*channel	= getChannel(channelName);
-
-		//checkClientOp(client, channel);
-		Channel &channel = getChannel(channelName);
-		if (channel.isClientInChannel(invitedClient))
-			throw(443);
-		// OTHER CHECKS
-		buf(invited, 1002, channelName, "INVITE " + invitedClient);
-		buf(client, 341, invitedClient + " " + channelName, "INVITE");
-		
-	}
-	catch(int e)
-	{
-		buf(client, e, "", "INVITE");
-	}
-	return (0);
-}
